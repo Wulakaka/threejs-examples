@@ -94,7 +94,7 @@ class BirdGeometry extends THREE.BufferGeometry {
       references.array[v * 2] = x;
       references.array[v * 2 + 1] = y;
 
-      // TODO: 什么意思？
+      // TODO: 什么意思？[0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8,...] 表示顶点索引？
       birdVertex.array[v] = v % 9;
     }
 
@@ -104,8 +104,8 @@ class BirdGeometry extends THREE.BufferGeometry {
 
 //
 
-let container, stats;
-let camera, scene, renderer;
+let container: HTMLDivElement, stats: Stats;
+let camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer;
 let mouseX = 0,
   mouseY = 0;
 
