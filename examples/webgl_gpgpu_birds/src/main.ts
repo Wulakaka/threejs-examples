@@ -9,7 +9,7 @@ import { GPUComputationRenderer } from "three/addons/misc/GPUComputationRenderer
 
 /* TEXTURE WIDTH FOR SIMULATION */
 const WIDTH = 32;
-
+// TODO: 鸟组成的矩阵？
 const BIRDS = WIDTH * WIDTH;
 
 // Custom Geometry - using 3 triangles each. No UVs, no normals currently.
@@ -17,19 +17,29 @@ class BirdGeometry extends THREE.BufferGeometry {
   constructor() {
     super();
 
+    // 每个鸟有3个三角形
     const trianglesPerBird = 3;
+    // 所有鸟的三角形数量
     const triangles = BIRDS * trianglesPerBird;
+    // 每个三角形有3个顶点
+    // 所有三角形的顶点数量
     const points = triangles * 3;
 
+    // 位置属性
     const vertices = new THREE.BufferAttribute(new Float32Array(points * 3), 3);
+    // 颜色属性
     const birdColors = new THREE.BufferAttribute(
       new Float32Array(points * 3),
       3
     );
+    // 参考属性
+    // TODO: 为什么是乘以 2 ？
     const references = new THREE.BufferAttribute(
       new Float32Array(points * 2),
       2
     );
+
+    // TODO: 鸟的位置？
     const birdVertex = new THREE.BufferAttribute(new Float32Array(points), 1);
 
     this.setAttribute("position", vertices);
@@ -41,14 +51,15 @@ class BirdGeometry extends THREE.BufferGeometry {
 
     let v = 0;
 
-    function verts_push() {
-      for (let i = 0; i < arguments.length; i++) {
-        vertices.array[v++] = arguments[i];
+    // 填充顶点数据
+    function verts_push(...list: number[]) {
+      for (let i = 0; i < list.length; i++) {
+        vertices.array[v++] = list[i];
       }
     }
 
     const wingsSpan = 20;
-
+    // 构建鸟的几何体
     for (let f = 0; f < BIRDS; f++) {
       // Body
 
@@ -62,20 +73,28 @@ class BirdGeometry extends THREE.BufferGeometry {
     }
 
     for (let v = 0; v < triangles * 3; v++) {
+      // ~~ 是 Math.floor 的简写
+      // 三角形的索引
       const triangleIndex = ~~(v / 3);
+      // 鸟的索引
       const birdIndex = ~~(triangleIndex / trianglesPerBird);
+      // 横向占比
       const x = (birdIndex % WIDTH) / WIDTH;
+      // 纵向占比
       const y = ~~(birdIndex / WIDTH) / WIDTH;
 
+      // 计算颜色，颜色信息表示位置信息
       const c = new THREE.Color(0x666666 + (~~(v / 9) / BIRDS) * 0x666666);
 
       birdColors.array[v * 3 + 0] = c.r;
       birdColors.array[v * 3 + 1] = c.g;
       birdColors.array[v * 3 + 2] = c.b;
 
+      // 画布的位置信息表示对应的鸟
       references.array[v * 2] = x;
       references.array[v * 2 + 1] = y;
 
+      // TODO: 什么意思？
       birdVertex.array[v] = v % 9;
     }
 
