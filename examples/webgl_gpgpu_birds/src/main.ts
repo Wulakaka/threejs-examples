@@ -10,6 +10,11 @@ import {
   type Variable,
 } from "three/addons/misc/GPUComputationRenderer.js";
 
+import fragmentShaderVelocity from "./shaders/gpgpu/velocity.glsl?raw";
+import fragmentShaderPosition from "./shaders/gpgpu/position.glsl?raw";
+import vertexShader from "./shaders/bird/vertex.glsl?raw";
+import fragmentShader from "./shaders/bird/fragment.glsl?raw";
+
 /* TEXTURE WIDTH FOR SIMULATION */
 const WIDTH = 32;
 // TODO: 鸟组成的矩阵？
@@ -208,12 +213,12 @@ function initComputeRenderer() {
 
   velocityVariable = gpuCompute.addVariable(
     "textureVelocity",
-    document.getElementById("fragmentShaderVelocity")!.textContent as string,
+    fragmentShaderVelocity,
     dtVelocity
   );
   positionVariable = gpuCompute.addVariable(
     "texturePosition",
-    document.getElementById("fragmentShaderPosition")!.textContent as string,
+    fragmentShaderPosition,
     dtPosition
   );
 
@@ -300,8 +305,8 @@ function initBirds() {
   // THREE.ShaderMaterial
   const material = new THREE.ShaderMaterial({
     uniforms: birdUniforms,
-    vertexShader: document.getElementById("birdVS")!.textContent as string,
-    fragmentShader: document.getElementById("birdFS")!.textContent as string,
+    vertexShader,
+    fragmentShader,
     side: THREE.DoubleSide,
   });
 
