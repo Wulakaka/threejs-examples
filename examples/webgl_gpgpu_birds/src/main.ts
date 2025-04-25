@@ -16,8 +16,9 @@ import vertexShader from "./shaders/bird/vertex.glsl?raw";
 import fragmentShader from "./shaders/bird/fragment.glsl?raw";
 
 /* TEXTURE WIDTH FOR SIMULATION */
+// 用于gpgpu纹理的尺寸
 const WIDTH = 32;
-// TODO: 鸟组成的矩阵？
+
 const BIRDS = WIDTH * WIDTH;
 
 // Custom Geometry - using 3 triangles each. No UVs, no normals currently.
@@ -41,7 +42,8 @@ class BirdGeometry extends THREE.BufferGeometry {
       3
     );
     // 参考属性
-    // TODO: 为什么是乘以 2 ？
+    // 为什么是乘以 2 ？
+    // 因为只有 x 和 y 坐标
     const references = new THREE.BufferAttribute(
       new Float32Array(points * 2),
       2
@@ -122,6 +124,7 @@ let mouseX = 0,
 let windowHalfX = window.innerWidth / 2;
 let windowHalfY = window.innerHeight / 2;
 
+// 差不多是半屏幕的大小，如果设置的较小，则看不出鼠标追赶的效果
 const BOUNDS = 800,
   BOUNDS_HALF = BOUNDS / 2;
 
@@ -239,10 +242,14 @@ function initComputeRenderer() {
   velocityUniforms["time"] = { value: 1.0 };
   velocityUniforms["delta"] = { value: 0.0 };
   velocityUniforms["testing"] = { value: 1.0 };
+  // 分离距离
   velocityUniforms["separationDistance"] = { value: 1.0 };
+  // 对齐距离
   velocityUniforms["alignmentDistance"] = { value: 1.0 };
+  // 聚合距离
   velocityUniforms["cohesionDistance"] = { value: 1.0 };
   velocityUniforms["freedomFactor"] = { value: 1.0 };
+  // 表示捕食者的位置
   velocityUniforms["predator"] = { value: new THREE.Vector3() };
   velocityVariable.material.defines.BOUNDS = BOUNDS.toFixed(2);
 
@@ -388,6 +395,7 @@ function render() {
   birdUniforms["time"].value = now;
   birdUniforms["delta"].value = delta;
 
+  // [-0.5, 0.5] 的范围内
   velocityUniforms["predator"].value.set(
     (0.5 * mouseX) / windowHalfX,
     (-0.5 * mouseY) / windowHalfY,

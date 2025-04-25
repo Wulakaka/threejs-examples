@@ -8,8 +8,10 @@ void main() {
   vec2 uv = gl_FragCoord.xy / resolution.xy;
   vec4 tmpPos = texture2D(texturePosition, uv);
   vec3 position = tmpPos.xyz;
+  // 速度向量
   vec3 velocity = texture2D(textureVelocity, uv).xyz;
 
+  // 相位值 用于表示翅膀煽动
   float phase = tmpPos.w;
 
   phase = mod((phase + delta +
