@@ -5,7 +5,10 @@ import * as THREE from "three";
 import Stats from "three/addons/libs/stats.module.js";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
-import { GPUComputationRenderer } from "three/addons/misc/GPUComputationRenderer.js";
+import {
+  GPUComputationRenderer,
+  type Variable,
+} from "three/addons/misc/GPUComputationRenderer.js";
 
 /* TEXTURE WIDTH FOR SIMULATION */
 const WIDTH = 32;
@@ -105,7 +108,9 @@ class BirdGeometry extends THREE.BufferGeometry {
 //
 
 let container: HTMLDivElement, stats: Stats;
-let camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer;
+let camera: THREE.PerspectiveCamera,
+  scene: THREE.Scene,
+  renderer: THREE.WebGLRenderer;
 let mouseX = 0,
   mouseY = 0;
 
@@ -117,12 +122,13 @@ const BOUNDS = 800,
 
 let last = performance.now();
 
-let gpuCompute;
-let velocityVariable;
-let positionVariable;
-let positionUniforms;
-let velocityUniforms;
-let birdUniforms;
+let gpuCompute: GPUComputationRenderer;
+// Variable 就是一种数据类型
+let velocityVariable: Variable;
+let positionVariable: Variable;
+let positionUniforms: THREE.ShaderMaterial["uniforms"];
+let velocityUniforms: THREE.ShaderMaterial["uniforms"];
+let birdUniforms: THREE.ShaderMaterial["uniforms"];
 
 init();
 
@@ -145,18 +151,18 @@ function init() {
   renderer = new THREE.WebGLRenderer();
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
+  // 替代 requestAnimationFrame
   renderer.setAnimationLoop(animate);
   container.appendChild(renderer.domElement);
 
   initComputeRenderer();
 
+  // 帧率统计
   stats = new Stats();
   container.appendChild(stats.dom);
 
   container.style.touchAction = "none";
   container.addEventListener("pointermove", onPointerMove);
-
-  //
 
   window.addEventListener("resize", onWindowResize);
 
@@ -202,12 +208,12 @@ function initComputeRenderer() {
 
   velocityVariable = gpuCompute.addVariable(
     "textureVelocity",
-    document.getElementById("fragmentShaderVelocity").textContent,
+    document.getElementById("fragmentShaderVelocity")!.textContent as string,
     dtVelocity
   );
   positionVariable = gpuCompute.addVariable(
     "texturePosition",
-    document.getElementById("fragmentShaderPosition").textContent,
+    document.getElementById("fragmentShaderPosition")!.textContent as string,
     dtPosition
   );
 
@@ -245,6 +251,38 @@ function initComputeRenderer() {
   if (error !== null) {
     console.error(error);
   }
+
+  addDebugMesh();
+
+  function addDebugMesh() {
+    // Debug
+    const debug: {
+      velocityMesh?: THREE.Mesh;
+      positionMesh?: THREE.Mesh;
+    } = {};
+    // 通过获取 texture 来创建一个用于 debug 的 mesh
+    debug.velocityMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(WIDTH, WIDTH),
+      new THREE.MeshBasicMaterial({
+        map: gpuCompute.getCurrentRenderTarget(velocityVariable).texture,
+      })
+    );
+    debug.velocityMesh.position.z = 250;
+    debug.velocityMesh.position.x = -20;
+    // debug.velocityMesh.visible = false;
+    scene.add(debug.velocityMesh);
+
+    debug.positionMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(WIDTH, WIDTH),
+      new THREE.MeshBasicMaterial({
+        map: gpuCompute.getCurrentRenderTarget(positionVariable).texture,
+      })
+    );
+    debug.positionMesh.position.z = 250;
+    debug.positionMesh.position.x = 20;
+    // debug.positionMesh.visible = false;
+    scene.add(debug.positionMesh);
+  }
 }
 
 function initBirds() {
@@ -262,21 +300,23 @@ function initBirds() {
   // THREE.ShaderMaterial
   const material = new THREE.ShaderMaterial({
     uniforms: birdUniforms,
-    vertexShader: document.getElementById("birdVS").textContent,
-    fragmentShader: document.getElementById("birdFS").textContent,
+    vertexShader: document.getElementById("birdVS")!.textContent as string,
+    fragmentShader: document.getElementById("birdFS")!.textContent as string,
     side: THREE.DoubleSide,
   });
 
   const birdMesh = new THREE.Mesh(geometry, material);
   birdMesh.rotation.y = Math.PI / 2;
+  // TODO: 为什么要设置为 false？
+  // 关闭自动更新矩阵，手动更新矩阵
   birdMesh.matrixAutoUpdate = false;
   birdMesh.updateMatrix();
 
   scene.add(birdMesh);
 }
 
-function fillPositionTexture(texture) {
-  const theArray = texture.image.data;
+function fillPositionTexture(texture: THREE.DataTexture) {
+  const theArray = texture.image.data as Float32Array;
 
   for (let k = 0, kl = theArray.length; k < kl; k += 4) {
     const x = Math.random() * BOUNDS - BOUNDS_HALF;
@@ -290,8 +330,8 @@ function fillPositionTexture(texture) {
   }
 }
 
-function fillVelocityTexture(texture) {
-  const theArray = texture.image.data;
+function fillVelocityTexture(texture: THREE.DataTexture) {
+  const theArray = texture.image.data as Float32Array;
 
   for (let k = 0, kl = theArray.length; k < kl; k += 4) {
     const x = Math.random() - 0.5;
@@ -315,7 +355,7 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function onPointerMove(event) {
+function onPointerMove(event: PointerEvent) {
   if (event.isPrimary === false) return;
 
   mouseX = event.clientX - windowHalfX;
