@@ -100,10 +100,10 @@ void main() {
   // 增加回到中心的速度
   velocity -= normalize(dir) * delta * 5.;
 
+  // 遍历跟每只鸟的距离
   for(float y = 0.0; y < height; y++) {
     for(float x = 0.0; x < width; x++) {
 
-      // TODO: 为什么 ref 中的坐标表示将要去的地方？
       vec2 ref = vec2(x + 0.5, y + 0.5) / resolution.xy;
       birdPosition = texture2D(texturePosition, ref).xyz;
 
@@ -115,7 +115,7 @@ void main() {
 
       distSquared = dist * dist;
 
-      // 如果距离太远，跳过
+      // 如果距离太远，不影响当前鸟
       if(distSquared > zoneRadiusSquared)
         continue;
 

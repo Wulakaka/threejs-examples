@@ -42,8 +42,7 @@ class BirdGeometry extends THREE.BufferGeometry {
       3
     );
     // 参考属性
-    // 为什么是乘以 2 ？
-    // 因为只有 x 和 y 坐标
+    // 每一个顶点可以通过 reference 属性来获得自己在 texture 中的坐标
     const references = new THREE.BufferAttribute(
       new Float32Array(points * 2),
       2
