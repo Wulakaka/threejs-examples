@@ -11,12 +11,14 @@ varying float z;
 
 uniform float time;
 
+// 只是做了转向和翅膀挥动
 void main() {
 
   vec4 tmpPos = texture2D(texturePosition, reference);
   vec3 pos = tmpPos.xyz;
   vec3 velocity = normalize(texture2D(textureVelocity, reference).xyz);
 
+  // position 是不变值，就是初始位置
   vec3 newPosition = position;
 
   if(birdVertex == 4.0 || birdVertex == 7.0) {
