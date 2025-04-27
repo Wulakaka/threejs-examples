@@ -11,6 +11,8 @@ import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 
 import "./style.css";
+import smoothFragmentShader from "./shaders/smoothFragmentShader.glsl?raw";
+import readWaterLevelFragmentShader from "./shaders/readWaterLevelFragmentShader.glsl?raw";
 
 // Texture width for simulation
 const WIDTH = 128;
@@ -244,14 +246,13 @@ function initWater() {
   if (error !== null) console.error(error);
 
   // Create compute shader to smooth the water surface and velocity
-  smoothShader = gpuCompute.createShaderMaterial(
-    document.getElementById("smoothFragmentShader").textContent,
-    { smoothTexture: { value: null } }
-  );
+  smoothShader = gpuCompute.createShaderMaterial(smoothFragmentShader, {
+    smoothTexture: { value: null },
+  });
 
   // Create compute shader to read water level
   readWaterLevelShader = gpuCompute.createShaderMaterial(
-    document.getElementById("readWaterLevelFragmentShader").textContent,
+    readWaterLevelFragmentShader,
     {
       point1: { value: new THREE.Vector2() },
       levelTexture: { value: null },
