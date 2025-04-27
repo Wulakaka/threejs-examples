@@ -2,6 +2,6 @@ packages:
   - examples/*
   - packages/*
   - components/**
-  - '!**/test/**'
+  - "!**/test/**"
 onlyBuiltDependencies:
   - esbuild

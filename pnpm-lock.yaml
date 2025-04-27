@@ -27,6 +27,8 @@ importers:
 
   examples/webgl_gpgpu_birds: {}
 
+  examples/webgl_gpgpu_water: {}
+
 packages:
 
   '@esbuild/aix-ppc64@0.25.3':
