@@ -22,6 +22,7 @@ let textureAnimation: THREE.DataTexture,
   materialShader: THREE.WebGLProgramParametersWithUniforms,
   indicesPerBird: number;
 
+// 对齐到最近的 2 的幂
 function nextPowerOf2(n: number) {
   return Math.pow(2, Math.ceil(Math.log(n) / Math.log(2)));
 }
@@ -45,12 +46,17 @@ new GLTFLoader().load(gltfs[selectModel], function (gltf) {
   const animations = gltf.animations;
   durationAnimation = Math.round(animations[0].duration * 60);
   const birdGeo = (gltf.scene.children[0] as THREE.Mesh).geometry;
+  // morphAttributes 是存储 BufferAttribute 的 Hashmap，存储了几何体 morph targets 的细节信息。
+  // 这里我们只取 position 属性，表示顶点位置的变化
+  // TODO: 干什么用的？
   const morphAttributes = birdGeo.morphAttributes.position;
   const tHeight = nextPowerOf2(durationAnimation);
   const tWidth = nextPowerOf2(birdGeo.getAttribute("position").count);
+  // 索引总数
   indicesPerBird = birdGeo.index!.count;
   const tData = new Float32Array(4 * tWidth * tHeight);
 
+  // 存储了每个顶点每帧的动画数据
   for (let i = 0; i < tWidth; i++) {
     for (let j = 0; j < tHeight; j++) {
       const offset = j * tWidth * 4;
@@ -104,6 +110,7 @@ new GLTFLoader().load(gltfs[selectModel], function (gltf) {
     seeds = [],
     indices = [];
   const totalVertices = birdGeo.getAttribute("position").count * 3 * BIRDS;
+  // 填充所有鸟的顶点数据以及颜色数据
   for (let i = 0; i < totalVertices; i++) {
     const bIndex = i % (birdGeo.getAttribute("position").count * 3);
     vertices.push(birdGeo.getAttribute("position").array[bIndex]);
@@ -111,10 +118,16 @@ new GLTFLoader().load(gltfs[selectModel], function (gltf) {
   }
 
   let r = Math.random();
+  // 遍历所有鸟的顶点数据
   for (let i = 0; i < birdGeo.getAttribute("position").count * BIRDS; i++) {
+    // 每个顶点在当前鸟中的索引
     const bIndex = i % birdGeo.getAttribute("position").count;
+    // 每只鸟的索引
     const bird = Math.floor(i / birdGeo.getAttribute("position").count);
+    // 如果是第一个顶点，重新生成随机数
+    // TODO: 这里重新随机有什么用？
     if (bIndex == 0) r = Math.random();
+    // ~~ 取整
     const j = ~~bird;
     const x = (j % WIDTH) / WIDTH;
     const y = ~~(j / WIDTH) / WIDTH;
@@ -122,6 +135,8 @@ new GLTFLoader().load(gltfs[selectModel], function (gltf) {
     seeds.push(bird, r, Math.random(), Math.random());
   }
 
+  // 遍历所有鸟的所有面的顶点
+  // 将每只鸟的顶点索引与几何体的顶点索引正确地对齐，从而确保每只鸟的顶点数据在渲染时不会混淆。
   for (let i = 0; i < birdGeo.index!.array.length * BIRDS; i++) {
     const offset =
       Math.floor(i / birdGeo.index!.array.length) *
