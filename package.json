@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev:bird": "pnpm --filter webgl_gpgpu_birds dev",
+    "dev:bird:gltf": "vite serve examples/webgl_gpgpu_birds_gltf",
     "dev:water": "vite serve examples/webgl_gpgpu_water",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
