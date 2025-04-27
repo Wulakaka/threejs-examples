@@ -162,8 +162,12 @@ async function init() {
   });
   gui.add(effectController, "shadow").onChange(addShadow);
 
-  //const buttonSmooth = { smoothWater: function () {smoothWater();} };
-  //gui.add( buttonSmooth, 'smoothWater' );
+  const buttonSmooth = {
+    smoothWater: function () {
+      smoothWater();
+    },
+  };
+  gui.add(buttonSmooth, "smoothWater");
 
   initWater();
 
