@@ -88,9 +88,9 @@ void main() {
       // if ( rand( uv + time ) < freedomFactor ) {}
 
       // Attract flocks to the center
-      // TODO:群行行为？
+      // 吸引鸟群到中心
   vec3 central = vec3(0., 0., 0.);
-  // 不减是不是也可以？
+  // 远离中心的方向
   dir = selfPosition - central;
   // 距离中心的距离
   dist = length(dir);

@@ -48,7 +48,7 @@ class BirdGeometry extends THREE.BufferGeometry {
       2
     );
 
-    // TODO: 鸟的位置？
+    // 顶点索引，可以用来标记翅膀的顶点，做翅膀煽动用
     const birdVertex = new THREE.BufferAttribute(new Float32Array(points), 1);
 
     this.setAttribute("position", vertices);
@@ -103,7 +103,7 @@ class BirdGeometry extends THREE.BufferGeometry {
       references.array[v * 2] = x;
       references.array[v * 2 + 1] = y;
 
-      // TODO: 什么意思？[0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8,...] 表示顶点索引？
+      // [0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8,...] 索引为4或7就是翅膀的顶点
       birdVertex.array[v] = v % 9;
     }
 
@@ -318,14 +318,16 @@ function initBirds() {
 
   const birdMesh = new THREE.Mesh(geometry, material);
   birdMesh.rotation.y = Math.PI / 2;
-  // TODO: 为什么要设置为 false？
-  // 关闭自动更新矩阵，手动更新矩阵
+
+  // 关闭自动更新矩阵
   birdMesh.matrixAutoUpdate = false;
+  // 仅在第一次渲染时更新矩阵，后续无需更新
   birdMesh.updateMatrix();
 
   scene.add(birdMesh);
 }
 
+// 随机生成位置
 function fillPositionTexture(texture: THREE.DataTexture) {
   const theArray = texture.image.data as Float32Array;
 
@@ -341,6 +343,7 @@ function fillPositionTexture(texture: THREE.DataTexture) {
   }
 }
 
+// 随机生成速度，范围在 [-5, 5] * [-5, 5] * [-5, 5] 之间
 function fillVelocityTexture(texture: THREE.DataTexture) {
   const theArray = texture.image.data as Float32Array;
 
