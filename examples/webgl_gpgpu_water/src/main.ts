@@ -4,7 +4,10 @@ import Stats from "three/addons/libs/stats.module.js";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-import { GPUComputationRenderer } from "three/addons/misc/GPUComputationRenderer.js";
+import {
+  GPUComputationRenderer,
+  type Variable,
+} from "three/addons/misc/GPUComputationRenderer.js";
 import { SimplexNoise } from "three/addons/math/SimplexNoise.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
@@ -21,32 +24,35 @@ const WIDTH = 128;
 const BOUNDS = 6;
 const BOUNDS_HALF = BOUNDS * 0.5;
 
-let tmpHeightmap = null;
+let tmpHeightmap: THREE.Texture | null = null;
 const tmpQuat = new THREE.Quaternion();
 const tmpQuatX = new THREE.Quaternion();
 const tmpQuatZ = new THREE.Quaternion();
-let duckModel = null;
+let duckModel: THREE.Mesh | null = null;
 
-let container, stats;
-let camera, scene, renderer, controls;
+let container: HTMLDivElement, stats: Stats;
+let camera: THREE.PerspectiveCamera,
+  scene: THREE.Scene,
+  renderer: THREE.WebGLRenderer,
+  controls: OrbitControls;
 let mousedown = false;
 const mouseCoords = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 
-let sun;
-let waterMesh;
-let poolBorder;
-let meshRay;
-let gpuCompute;
-let heightmapVariable;
-let smoothShader;
-let readWaterLevelShader;
-let readWaterLevelRenderTarget;
-let readWaterLevelImage;
+let sun: THREE.DirectionalLight;
+let waterMesh: THREE.Mesh<THREE.PlaneGeometry, WaterMaterial>;
+let poolBorder: THREE.Mesh<THREE.TorusGeometry, THREE.MeshStandardMaterial>;
+let meshRay: THREE.Mesh;
+let gpuCompute: GPUComputationRenderer;
+let heightmapVariable: Variable;
+let smoothShader: THREE.ShaderMaterial;
+let readWaterLevelShader: THREE.ShaderMaterial;
+let readWaterLevelRenderTarget: THREE.WebGLRenderTarget<THREE.Texture>;
+let readWaterLevelImage: Uint8Array;
 const waterNormal = new THREE.Vector3();
 
 const NUM_DUCK = 12;
-const ducks = [];
+const ducks: THREE.Mesh[] = [];
 let ducksEnabled = true;
 
 const simplex = new SimplexNoise();
@@ -119,7 +125,7 @@ async function init() {
   scene.backgroundBlurriness = 0.3;
   scene.environmentIntensity = 1.25;
 
-  duckModel = model.scene.children[0];
+  duckModel = model.scene.children[0] as THREE.Mesh;
   duckModel.receiveShadow = true;
   duckModel.castShadow = true;
 
@@ -204,7 +210,9 @@ function initWater() {
     new THREE.MeshStandardMaterial({ color: 0x908877, roughness: 0.2 })
   );
   scene.add(poolBorder);
+  // @ts-ignore
   borderGeom.receiveShadow = true;
+  // @ts-ignore
   borderGeom.castShadow = true;
 
   // THREE.Mesh just for mouse raycasting
@@ -275,10 +283,10 @@ function initWater() {
   });
 }
 
-function fillTexture(texture) {
+function fillTexture(texture: THREE.DataTexture) {
   const waterMaxHeight = 0.1;
 
-  function noise(x, y) {
+  function noise(x: number, y: number) {
     let multR = waterMaxHeight;
     let mult = 0.025;
     let r = 0;
@@ -291,7 +299,7 @@ function fillTexture(texture) {
     return r;
   }
 
-  const pixels = texture.image.data;
+  const pixels = texture.image.data as Float32Array;
 
   let p = 0;
   for (let j = 0; j < WIDTH; j++) {
@@ -309,7 +317,7 @@ function fillTexture(texture) {
   }
 }
 
-function addShadow(v) {
+function addShadow(v: boolean) {
   renderer.shadowMap.enabled = v;
   sun.castShadow = v;
 
@@ -351,9 +359,9 @@ function smoothWater() {
 
 function createducks() {
   for (let i = 0; i < NUM_DUCK; i++) {
-    let sphere = duckModel;
+    let sphere = duckModel!;
     if (i < NUM_DUCK - 1) {
-      sphere = duckModel.clone();
+      sphere = duckModel!.clone();
     }
 
     sphere.position.x = (Math.random() - 0.5) * BOUNDS * 0.7;
@@ -466,7 +474,7 @@ function onPointerUp() {
   controls.enabled = true;
 }
 
-function onPointerMove(event) {
+function onPointerMove(event: PointerEvent) {
   const dom = renderer.domElement;
   mouseCoords.set(
     (event.clientX / dom.clientWidth) * 2 - 1,
@@ -512,6 +520,8 @@ function render() {
     if (ducksEnabled) duckDynamics();
 
     // Get compute output in custom uniform
+    // 实际为赋值到 material 的 uniforms 中
+    // @ts-ignore
     if (waterMesh) waterMesh.material.heightmap = tmpHeightmap;
 
     frame = 0;
@@ -524,7 +534,8 @@ function render() {
 //----------------------
 
 class WaterMaterial extends THREE.MeshStandardMaterial {
-  constructor(parameters) {
+  extra: { [key: string]: unknown };
+  constructor(parameters: THREE.MeshStandardMaterialParameters) {
     super();
 
     this.defines = {
@@ -541,7 +552,7 @@ class WaterMaterial extends THREE.MeshStandardMaterial {
     this.setValues(parameters);
   }
 
-  addParameter(name, value) {
+  addParameter(name: string, value: unknown) {
     this.extra[name] = value;
     Object.defineProperty(this, name, {
       get: () => this.extra[name],
@@ -553,7 +564,7 @@ class WaterMaterial extends THREE.MeshStandardMaterial {
     });
   }
 
-  onBeforeCompile(shader) {
+  onBeforeCompile(shader: THREE.WebGLProgramParametersWithUniforms) {
     for (const name in this.extra) {
       shader.uniforms[name] = { value: this.extra[name] };
     }
