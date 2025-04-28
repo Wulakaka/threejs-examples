@@ -1,8 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader, SkeletonUtils } from "three/examples/jsm/Addons.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { globals } from "./globals";
-import type { GLTF } from "three/examples/jsm/Addons.js";
+import { globals, inputManager } from "./globals";
 
 import "./style.css";
 import { GameObjectManager } from "./GameObjectManager";
@@ -171,8 +170,11 @@ function render(now: number) {
     camera.updateProjectionMatrix();
   }
 
-  // 更新所有动画混合器
+  // 更新动画
   gameObjectManager.update();
+  // 更新输入管理器
+  // 必须在 gameObjectManager.update() 之后调用，否则 justPressed 永远为 false
+  inputManager.update();
 
   controls.update();
   renderer.render(scene, camera);
