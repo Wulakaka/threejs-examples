@@ -1,8 +1,17 @@
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/Addons.js";
-const manager = new THREE.LoadingManager();
+import "./style.css";
 
+const manager = new THREE.LoadingManager();
 manager.onLoad = init;
+
+const progressbarElem = document.querySelector(
+  "#progressbar"
+) as HTMLDivElement;
+manager.onProgress = (url, itemsLoaded, itemsTotal) => {
+  progressbarElem.style.width = `${(itemsLoaded / itemsTotal) * 100}%`;
+};
+
 const models: {
   [key: string]: {
     url: string;
@@ -27,5 +36,7 @@ const models: {
   }
 }
 function init() {
-  // TBD
+  // hide the loading bar 隐藏加载条
+  const loadingElem = document.querySelector("#loading") as HTMLDivElement;
+  loadingElem.style.display = "none";
 }
