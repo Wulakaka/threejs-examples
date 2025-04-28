@@ -83,7 +83,13 @@ function prepModelsAndAnimations() {
   });
 }
 
-const mixers: THREE.AnimationMixer[] = [];
+interface MixerInfo {
+  mixer: THREE.AnimationMixer;
+  actions: THREE.AnimationAction[];
+  actionNdx: number;
+}
+
+const mixerInfos: MixerInfo[] = [];
 
 function init() {
   // hide the loading bar 隐藏加载条
@@ -102,13 +108,32 @@ function init() {
     const root = new THREE.Object3D();
     root.add(clonedScene);
     scene.add(root);
-    root.position.x = (ndx % 3) * 3;
+    root.position.x = (ndx - 3) * 3;
 
     const mixer = new THREE.AnimationMixer(clonedScene);
-    const firstClip = Object.values(model.animations!)[0];
-    const action = mixer.clipAction(firstClip);
-    action.play();
-    mixers.push(mixer);
+    const actions = Object.values(model.animations!).map((clip) =>
+      mixer.clipAction(clip)
+    );
+    const mixerInfo: MixerInfo = {
+      mixer,
+      actions,
+      actionNdx: -1,
+    };
+    mixerInfos.push(mixerInfo);
+    playNextAction(mixerInfo);
+  });
+}
+
+function playNextAction(mixerInfo: MixerInfo) {
+  const { actions, actionNdx } = mixerInfo;
+  const nextActionNdx = (actionNdx + 1) % actions.length;
+  mixerInfo.actionNdx = nextActionNdx;
+  actions.forEach((action, ndx) => {
+    const enabled = ndx === nextActionNdx;
+    action.enabled = enabled;
+    if (enabled) {
+      action.play();
+    }
   });
 }
 
@@ -137,7 +162,7 @@ function render(now: number) {
   }
 
   // 更新所有动画混合器
-  for (const mixer of mixers) {
+  for (const { mixer } of mixerInfos) {
     mixer.update(delta);
   }
 
@@ -145,5 +170,11 @@ function render(now: number) {
   renderer.render(scene, camera);
   requestAnimationFrame(render);
 }
+
+window.addEventListener("keydown", (e) => {
+  const mixerInfo = mixerInfos[e.keyCode - 49];
+  if (!mixerInfo) return;
+  playNextAction(mixerInfo);
+});
 
 requestAnimationFrame(render);
