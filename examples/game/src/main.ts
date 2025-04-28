@@ -1,9 +1,13 @@
 import * as THREE from "three";
 import { GLTFLoader, SkeletonUtils } from "three/examples/jsm/Addons.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { globals } from "./globals";
 import type { GLTF } from "three/examples/jsm/Addons.js";
 
 import "./style.css";
+import { GameObjectManager } from "./GameObjectManager";
+import { Player } from "./Player";
+import { Model } from "./types/Model";
 
 const canvas = document.querySelector("#c") as HTMLCanvasElement;
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
@@ -45,13 +49,7 @@ manager.onProgress = (url, itemsLoaded, itemsTotal) => {
 };
 
 const models: {
-  [key: string]: {
-    url: string;
-    gltf?: GLTF;
-    animations?: {
-      [key: string]: THREE.AnimationClip;
-    };
-  };
+  [key: string]: Model;
 } = {
   pig: { url: "/models/animals/Pig.glb" },
   cow: { url: "/models/animals/Cow.glb" },
@@ -73,11 +71,13 @@ const models: {
 
 function prepModelsAndAnimations() {
   Object.values(models).forEach((model) => {
+    console.log("------->:", model.url);
     const animsByName: {
       [key: string]: THREE.AnimationClip;
     } = {};
     model.gltf?.animations.forEach((clip) => {
       animsByName[clip.name] = clip;
+      console.log("  ", clip.name);
     });
     model.animations = animsByName;
   });
@@ -91,6 +91,8 @@ interface MixerInfo {
 
 const mixerInfos: MixerInfo[] = [];
 
+const gameObjectManager = new GameObjectManager();
+
 function init() {
   // hide the loading bar 隐藏加载条
   const loadingElem = document.querySelector("#loading") as HTMLDivElement;
@@ -98,6 +100,11 @@ function init() {
 
   // 准备模型动画
   prepModelsAndAnimations();
+
+  {
+    const gameObject = gameObjectManager.createGameObject(scene, "player");
+    gameObject.addComponent(Player, models);
+  }
 
   // 加载所有模型到场景中
   Object.values(models).forEach((model, ndx) => {
@@ -151,9 +158,12 @@ function resizeRendererToDisplaySize(renderer: THREE.WebGLRenderer) {
 
 let then = 0;
 function render(now: number) {
-  now *= 0.001; // convert to seconds
-  const delta = now - then;
-  then = now;
+  // convert to seconds
+  globals.time = now * 0.001;
+  // make sure deltaTime is isn't too big
+  // 避免 deltaTime 太大导致动画变动太多
+  globals.deltaTime = Math.min(globals.time - then, 1 / 20);
+  then = globals.deltaTime;
 
   if (resizeRendererToDisplaySize(renderer)) {
     const canvas = renderer.domElement;
@@ -162,9 +172,7 @@ function render(now: number) {
   }
 
   // 更新所有动画混合器
-  for (const { mixer } of mixerInfos) {
-    mixer.update(delta);
-  }
+  gameObjectManager.update();
 
   controls.update();
   renderer.render(scene, camera);
