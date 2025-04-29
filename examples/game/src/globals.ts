@@ -1,6 +1,7 @@
-import { CameraInfo } from "./CameraInfo";
-import { InputManager } from "./InputManager";
 import * as THREE from "three";
+import { InputManager } from "./InputManager";
+import type { CameraInfo } from "./CameraInfo";
+import type { GameObject } from "./GameObject";
 
 export const globals: {
   time: number;
@@ -9,6 +10,7 @@ export const globals: {
   cameraInfo?: CameraInfo;
   camera?: THREE.PerspectiveCamera;
   canvas?: HTMLCanvasElement;
+  congaLine?: GameObject[];
 } = {
   time: 0,
   deltaTime: 0,

@@ -8,6 +8,7 @@ import { GameObjectManager } from "./GameObjectManager";
 import { Player } from "./Player";
 import { Model } from "./types/Model";
 import { CameraInfo } from "./CameraInfo";
+import { Animal } from "./Animal";
 
 const canvas = document.querySelector("#c") as HTMLCanvasElement;
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
@@ -112,7 +113,24 @@ function init() {
   {
     const gameObject = gameObjectManager.createGameObject(scene, "player");
     gameObject.addComponent(Player, models);
+    globals.congaLine = [gameObject];
   }
+
+  const animalModelNames = [
+    "pig",
+    "cow",
+    "llama",
+    "pug",
+    "sheep",
+    "zebra",
+    "horse",
+  ];
+
+  animalModelNames.forEach((name, ndx) => {
+    const gameObject = gameObjectManager.createGameObject(scene, name);
+    gameObject.addComponent(Animal, models[name]);
+    gameObject.transform.position.x = (ndx + 1) * 5;
+  });
 
   // 加载所有模型到场景中
   Object.values(models).forEach((model, ndx) => {
@@ -122,8 +140,8 @@ function init() {
     // 文档中说是为了避免无法控制动画
     const root = new THREE.Object3D();
     root.add(clonedScene);
-    scene.add(root);
-    root.position.x = (ndx - 3) * 3;
+    // scene.add(root);
+    // root.position.x = (ndx - 3) * 3;
 
     const mixer = new THREE.AnimationMixer(clonedScene);
     const actions = Object.values(model.animations!).map((clip) =>
@@ -185,7 +203,7 @@ function render(now: number) {
   // 必须在 gameObjectManager.update() 之后调用，否则 justPressed 永远为 false
   inputManager.update();
 
-  controls.update();
+  // controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(render);
 }
