@@ -55,3 +55,34 @@ html, body {
     background-position: 0 0;
   }
 }
+
+#ui {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-items: center;
+  align-content: stretch;
+}
+#ui>div {
+  display: flex;
+  align-items: flex-end;
+  flex: 1 1 auto;
+}
+.bright {
+  filter: brightness(2);
+}
+#left {
+  justify-content: flex-end;
+}
+#right {
+  justify-content: flex-start;
+}
+#ui img {
+  padding: 10px;
+  width: 80px;
+  height: 80px;
+  display: block;
+}

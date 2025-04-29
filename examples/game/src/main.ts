@@ -7,6 +7,7 @@ import "./style.css";
 import { GameObjectManager } from "./GameObjectManager";
 import { Player } from "./Player";
 import { Model } from "./types/Model";
+import { CameraInfo } from "./CameraInfo";
 
 const canvas = document.querySelector("#c") as HTMLCanvasElement;
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
@@ -17,6 +18,8 @@ const near = 0.1;
 const far = 100;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 camera.position.set(0, 20, 40);
+globals.camera = camera;
+globals.canvas = canvas;
 
 const controls = new OrbitControls(camera, canvas);
 controls.target.set(0, 5, 0);
@@ -43,7 +46,7 @@ manager.onLoad = init;
 const progressbarElem = document.querySelector(
   "#progressbar"
 ) as HTMLDivElement;
-manager.onProgress = (url, itemsLoaded, itemsTotal) => {
+manager.onProgress = (_, itemsLoaded, itemsTotal) => {
   progressbarElem.style.width = `${(itemsLoaded / itemsTotal) * 100}%`;
 };
 
@@ -70,13 +73,13 @@ const models: {
 
 function prepModelsAndAnimations() {
   Object.values(models).forEach((model) => {
-    console.log("------->:", model.url);
+    // console.log("------->:", model.url);
     const animsByName: {
       [key: string]: THREE.AnimationClip;
     } = {};
     model.gltf?.animations.forEach((clip) => {
       animsByName[clip.name] = clip;
-      console.log("  ", clip.name);
+      // console.log("  ", clip.name);
     });
     model.animations = animsByName;
   });
@@ -99,6 +102,12 @@ function init() {
 
   // 准备模型动画
   prepModelsAndAnimations();
+
+  {
+    const gameObject = gameObjectManager.createGameObject(scene, "camera");
+    // cameraInfo 是一个组件，用于更新相机的投影矩阵和视锥体
+    globals.cameraInfo = gameObject.addComponent(CameraInfo);
+  }
 
   {
     const gameObject = gameObjectManager.createGameObject(scene, "player");

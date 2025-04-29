@@ -1,3 +1,5 @@
+import { globals } from "./globals";
+
 export class InputManager {
   keys: {
     [key: string]: {
@@ -44,6 +46,63 @@ export class InputManager {
     window.addEventListener("keyup", (e) => {
       setKeyFromKeyCode(e.keyCode, false);
     });
+
+    const sides = [
+      { elem: document.querySelector("#left")!, key: "left" },
+      { elem: document.querySelector("#right")!, key: "right" },
+    ];
+
+    const clearKeys = () => {
+      for (const { key } of sides) {
+        setKey(key, false);
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      e.preventDefault();
+      // this is needed because we call preventDefault();
+      // we also gave the canvas a tabindex so it can become the focus
+      globals.canvas?.focus();
+      window.addEventListener("pointermove", handleMouseMove);
+      window.addEventListener("pointerup", handleMouseUp);
+
+      for (const { elem, key } of sides) {
+        let pressed = false;
+        const rect = elem.getBoundingClientRect();
+        const x = e.clientX;
+        const y = e.clientY;
+        const inRect =
+          x >= rect.left &&
+          x <= rect.right &&
+          y >= rect.top &&
+          y <= rect.bottom;
+        if (inRect) {
+          pressed = true;
+        }
+        setKey(key, pressed);
+      }
+    };
+
+    function handleMouseUp() {
+      clearKeys();
+      window.removeEventListener("pointermove", handleMouseMove);
+      window.removeEventListener("pointerup", handleMouseUp);
+    }
+
+    const uiElem = document.querySelector("#ui")!;
+    uiElem.addEventListener(
+      "pointerdown",
+      handleMouseMove as (e: Event) => void,
+      { passive: false }
+    );
+    uiElem.addEventListener(
+      "touchstart",
+      (e) => {
+        // prevent scrolling
+        e.preventDefault();
+      },
+      { passive: false }
+    );
   }
 
   update() {
