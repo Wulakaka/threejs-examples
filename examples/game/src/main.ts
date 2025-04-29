@@ -8,6 +8,7 @@ import { Player } from "./Player";
 import { Model } from "./types/Model";
 import { CameraInfo } from "./CameraInfo";
 import { Animal } from "./Animal";
+import { rand } from "./utils";
 
 const canvas = document.querySelector("#c") as HTMLCanvasElement;
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
@@ -15,9 +16,9 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 const fov = 45;
 const aspect = 2; // the canvas default
 const near = 0.1;
-const far = 100;
+const far = 400;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-camera.position.set(0, 20, 40);
+camera.position.set(0, 100, 120);
 globals.camera = camera;
 globals.canvas = canvas;
 
@@ -126,12 +127,28 @@ function init() {
     "zebra",
     "horse",
   ];
+  const base = new THREE.Object3D();
+  const offset = new THREE.Object3D();
+  base.add(offset);
 
-  animalModelNames.forEach((name, ndx) => {
+  // position animals in a spiral.
+  // 在一个螺旋形状中放置动物
+  const numAnimals = 28;
+  const arc = 10;
+  const b = 10 / (2 * Math.PI);
+  let r = 10;
+  let phi = r / b;
+  for (let i = 0; i < numAnimals; ++i) {
+    const name = animalModelNames[rand(animalModelNames.length) | 0];
     const gameObject = gameObjectManager.createGameObject(scene, name);
     gameObject.addComponent(Animal, models[name]);
-    gameObject.transform.position.x = (ndx + 1) * 5;
-  });
+    base.rotation.y = phi;
+    offset.position.x = r;
+    offset.updateWorldMatrix(true, false);
+    offset.getWorldPosition(gameObject.transform.position);
+    phi += arc / r;
+    r = b * phi;
+  }
 
   // 加载所有模型到场景中
   Object.values(models).forEach((model, ndx) => {

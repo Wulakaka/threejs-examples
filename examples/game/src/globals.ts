@@ -21,7 +21,7 @@ export const globals: {
 } = {
   time: 0,
   deltaTime: 0,
-  moveSpeed: 16,
+  moveSpeed: 8,
   congaLine: [],
   gui: new GUI(),
   debug: true,
