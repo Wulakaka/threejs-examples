@@ -2,8 +2,14 @@ import * as THREE from "three";
 import { Component, GameObject } from "./GameObject";
 import { globals } from "./globals";
 
-const labelContainerElem = document.querySelector("#labels") as HTMLDivElement;
+globals.gui.add(globals, "debug").onChange(showHideDebugInfo);
 
+const labelContainerElem = document.querySelector("#labels") as HTMLDivElement;
+function showHideDebugInfo() {
+  labelContainerElem.style.display = globals.debug ? "" : "none";
+}
+
+showHideDebugInfo();
 export class StateDisplayHelper extends Component {
   elem: HTMLDivElement;
   pos: THREE.Vector3;
@@ -13,7 +19,7 @@ export class StateDisplayHelper extends Component {
     this.elem = document.createElement("div");
     labelContainerElem.appendChild(this.elem);
     this.pos = new THREE.Vector3(0, 0, 0);
-
+    // 放在地面上的环形标识
     this.helper = new THREE.PolarGridHelper(size / 2, 1, 1, 16);
     // @ts-ignore
     gameObject.transform.add(this.helper);
@@ -30,6 +36,10 @@ export class StateDisplayHelper extends Component {
   }
 
   update() {
+    this.helper.visible = globals.debug;
+    if (!globals.debug) {
+      return;
+    }
     const { pos } = this;
     const { transform } = this.gameObject;
     const { canvas } = globals;

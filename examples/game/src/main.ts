@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader, SkeletonUtils } from "three/examples/jsm/Addons.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { globals, inputManager } from "./globals";
 
 import "./style.css";
+import { globals, inputManager } from "./globals";
 import { GameObjectManager } from "./GameObjectManager";
 import { Player } from "./Player";
 import { Model } from "./types/Model";

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 import { InputManager } from "./InputManager";
 import type { CameraInfo } from "./CameraInfo";
 import type { GameObject } from "./GameObject";
@@ -14,11 +15,15 @@ export const globals: {
   congaLine: GameObject[];
   player?: Player;
   playerRadius?: number;
+  gui: GUI;
+  debug: boolean;
 } = {
   time: 0,
   deltaTime: 0,
   moveSpeed: 16,
   congaLine: [],
+  gui: new GUI(),
+  debug: true,
 };
 
 export const inputManager = new InputManager();
