@@ -4,6 +4,7 @@ import { globals, kForward } from "./globals";
 import { SkinInstance } from "./SkinInstance";
 import type { Model } from "./types/Model";
 import { FiniteStateMachine } from "./FiniteStateMachine";
+import { StateDisplayHelper } from "./StateDisplayHelper";
 
 // 通过闭包来缓存 delta 变量，避免每次调用都创建新的对象
 const aimTowardAndGetDistance = (function () {
@@ -35,8 +36,10 @@ const aimTowardAndGetDistance = (function () {
 })();
 export class Animal extends Component {
   fsm: FiniteStateMachine;
+  helper: StateDisplayHelper;
   constructor(gameObject: GameObject, model: Model) {
     super(gameObject);
+    this.helper = gameObject.addComponent(StateDisplayHelper, model.size!);
 
     const hitRadius = model.size! / 2;
 
@@ -148,6 +151,9 @@ export class Animal extends Component {
 
   update() {
     this.fsm.update();
+
+    const dir = THREE.MathUtils.radToDeg(this.gameObject.transform.rotation.y);
+    this.helper.setState(`${this.fsm.state}:${dir.toFixed(0)}`);
   }
 }
 
