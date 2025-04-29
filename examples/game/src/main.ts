@@ -73,7 +73,12 @@ const models: {
 }
 
 function prepModelsAndAnimations() {
+  const box = new THREE.Box3();
+  const size = new THREE.Vector3();
   Object.values(models).forEach((model) => {
+    box.setFromObject(model.gltf?.scene!);
+    box.getSize(size);
+    model.size = size.length();
     // console.log("------->:", model.url);
     const animsByName: {
       [key: string]: THREE.AnimationClip;
@@ -112,7 +117,7 @@ function init() {
 
   {
     const gameObject = gameObjectManager.createGameObject(scene, "player");
-    gameObject.addComponent(Player, models);
+    globals.player = gameObject.addComponent(Player, models);
     globals.congaLine = [gameObject];
   }
 

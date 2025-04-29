@@ -6,4 +6,5 @@ export interface Model {
   animations?: {
     [key: string]: THREE.AnimationClip;
   };
+  size?: number;
 }

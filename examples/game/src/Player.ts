@@ -11,6 +11,7 @@ export class Player extends Component {
   constructor(gameObject: GameObject, models: { [modelName: string]: Model }) {
     super(gameObject);
     const model = models.knight;
+    globals.playerRadius = model.size! / 2;
     this.skinInstance = gameObject.addComponent(SkinInstance, model);
     this.skinInstance.setAnimation("Run");
     this.turnSpeed = globals.moveSpeed / 4;
