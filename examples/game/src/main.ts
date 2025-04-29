@@ -3,8 +3,7 @@ import { GLTFLoader, SkeletonUtils } from "three/examples/jsm/Addons.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 import "./style.css";
-import { globals, inputManager } from "./globals";
-import { GameObjectManager } from "./GameObjectManager";
+import { globals, inputManager, gameObjectManager, scene } from "./globals";
 import { Player } from "./Player";
 import { Model } from "./types/Model";
 import { CameraInfo } from "./CameraInfo";
@@ -26,7 +25,6 @@ const controls = new OrbitControls(camera, canvas);
 controls.target.set(0, 5, 0);
 controls.update();
 
-const scene = new THREE.Scene();
 scene.background = new THREE.Color("white");
 
 function addLight(...pos: [number, number, number]) {
@@ -98,8 +96,6 @@ interface MixerInfo {
 }
 
 const mixerInfos: MixerInfo[] = [];
-
-const gameObjectManager = new GameObjectManager();
 
 function init() {
   // hide the loading bar 隐藏加载条

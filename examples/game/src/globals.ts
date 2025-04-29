@@ -4,6 +4,7 @@ import { InputManager } from "./InputManager";
 import type { CameraInfo } from "./CameraInfo";
 import type { GameObject } from "./GameObject";
 import { Player } from "./Player";
+import { GameObjectManager } from "./GameObjectManager";
 
 export const globals: {
   time: number;
@@ -29,3 +30,7 @@ export const globals: {
 export const inputManager = new InputManager();
 
 export const kForward = new THREE.Vector3(0, 0, 1);
+
+export const gameObjectManager = new GameObjectManager();
+
+export const scene = new THREE.Scene();
