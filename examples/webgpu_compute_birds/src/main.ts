@@ -14,6 +14,9 @@ let renderer: THREE.WebGPURenderer;
 
 let last = performance.now();
 
+let pointer: THREE.Vector2;
+let raycaster: THREE.Raycaster;
+
 function init() {
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -29,6 +32,10 @@ function init() {
   scene = new THREE.Scene();
   // fog 为了天空呈现泛白的效果
   scene.fog = new THREE.Fog(0xffffff, 700, 3000);
+
+  // Pointer
+  pointer = new THREE.Vector2();
+  raycaster = new THREE.Raycaster();
 
   // Sky
   function addSky() {
@@ -65,15 +72,34 @@ function init() {
   const controls = new OrbitControls(camera);
   controls.connect(renderer.domElement);
 
-  stats = new Stats({
-    precision: 3,
-    horizontal: false,
-    trackGPU: true,
-    trackCPT: true,
-  });
+  // stats
+  {
+    stats = new Stats({
+      precision: 3,
+      horizontal: false,
+      trackGPU: true,
+      trackCPT: true,
+    });
 
-  stats.init(renderer);
-  container.appendChild(stats.dom);
+    stats.init(renderer);
+    container.appendChild(stats.dom);
+  }
+
+  {
+    // 避免在移动端上手指滑动时，页面滚动
+    container.style.touchAction = "none";
+    container.addEventListener("pointermove", onPointerMove);
+  }
+}
+
+function onPointerMove(event: PointerEvent) {
+  // 为了避免多点触控时，pointer 的值被覆盖
+  if (event.isPrimary === false) return;
+
+  // [x, y] 的值范围是 [-1, 1]
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  // 由于 y 轴在 threejs 中是向上的，所以需要取反
+  pointer.y = 1 - (event.clientY / window.innerHeight) * 2;
 }
 
 function animate() {
@@ -88,6 +114,9 @@ function render() {
 
   if (deltaTime > 1) deltaTime = 1; // safety cap on large deltas
   last = now;
+
+  raycaster.setFromCamera(pointer, camera);
+  console.log(raycaster.ray.origin, raycaster.ray.direction);
 
   renderer.resolveTimestampsAsync(THREE.TimestampQuery.COMPUTE);
   renderer.render(scene, camera);
