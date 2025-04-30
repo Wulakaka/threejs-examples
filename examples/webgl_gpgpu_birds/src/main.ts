@@ -14,6 +14,7 @@ import fragmentShaderVelocity from "./shaders/gpgpu/velocity.glsl?raw";
 import fragmentShaderPosition from "./shaders/gpgpu/position.glsl?raw";
 import vertexShader from "./shaders/bird/vertex.glsl?raw";
 import fragmentShader from "./shaders/bird/fragment.glsl?raw";
+import { OrbitControls } from "three/examples/jsm/Addons.js";
 
 /* TEXTURE WIDTH FOR SIMULATION */
 // 用于gpgpu纹理的尺寸
@@ -111,14 +112,12 @@ class BirdGeometry extends THREE.BufferGeometry {
   }
 }
 
-//
-
 let container: HTMLDivElement, stats: Stats;
 let camera: THREE.PerspectiveCamera,
   scene: THREE.Scene,
   renderer: THREE.WebGLRenderer;
-let mouseX = 0,
-  mouseY = 0;
+// let mouseX = 0,
+//   mouseY = 0;
 
 let windowHalfX = window.innerWidth / 2;
 let windowHalfY = window.innerHeight / 2;
@@ -126,6 +125,9 @@ let windowHalfY = window.innerHeight / 2;
 // 差不多是半屏幕的大小，如果设置的较小，则看不出鼠标追赶的效果
 const BOUNDS = 800,
   BOUNDS_HALF = BOUNDS / 2;
+
+let pointer: THREE.Vector2;
+let raycaster: THREE.Raycaster;
 
 let last = performance.now();
 
@@ -155,6 +157,10 @@ function init() {
   scene.background = new THREE.Color(0xffffff);
   scene.fog = new THREE.Fog(0xffffff, 100, 1000);
 
+  // Pointer
+  pointer = new THREE.Vector2();
+  raycaster = new THREE.Raycaster();
+
   renderer = new THREE.WebGLRenderer();
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -163,6 +169,8 @@ function init() {
   container.appendChild(renderer.domElement);
 
   initComputeRenderer();
+
+  new OrbitControls(camera, renderer.domElement);
 
   // 帧率统计
   stats = new Stats();
@@ -248,9 +256,14 @@ function initComputeRenderer() {
   // 聚合距离
   velocityUniforms["cohesionDistance"] = { value: 1.0 };
   velocityUniforms["freedomFactor"] = { value: 1.0 };
-  // 表示捕食者的位置
-  velocityUniforms["predator"] = { value: new THREE.Vector3() };
-  velocityVariable.material.defines.BOUNDS = BOUNDS.toFixed(2);
+
+  // // 表示捕食者的位置
+  // velocityUniforms["predator"] = { value: new THREE.Vector3() };
+  // velocityVariable.material.defines.BOUNDS = BOUNDS.toFixed(2);
+
+  // raycaster 的起始位置和方向
+  velocityUniforms["rayOrigin"] = { value: new THREE.Vector3() };
+  velocityUniforms["rayDirection"] = { value: new THREE.Vector3() };
 
   velocityVariable.wrapS = THREE.RepeatWrapping;
   velocityVariable.wrapT = THREE.RepeatWrapping;
@@ -263,7 +276,7 @@ function initComputeRenderer() {
     console.error(error);
   }
 
-  addDebugMesh();
+  // addDebugMesh();
 
   function addDebugMesh() {
     // Debug
@@ -278,8 +291,8 @@ function initComputeRenderer() {
         map: gpuCompute.getCurrentRenderTarget(velocityVariable).texture,
       })
     );
-    debug.velocityMesh.position.z = 250;
-    debug.velocityMesh.position.x = -20;
+    debug.velocityMesh.position.x = -100;
+    debug.velocityMesh.scale.setScalar(4);
     // debug.velocityMesh.visible = false;
     scene.add(debug.velocityMesh);
 
@@ -289,8 +302,8 @@ function initComputeRenderer() {
         map: gpuCompute.getCurrentRenderTarget(positionVariable).texture,
       })
     );
-    debug.positionMesh.position.z = 250;
-    debug.positionMesh.position.x = 20;
+    debug.positionMesh.position.x = 100;
+    debug.positionMesh.scale.setScalar(4);
     // debug.positionMesh.visible = false;
     scene.add(debug.positionMesh);
   }
@@ -372,8 +385,13 @@ function onWindowResize() {
 function onPointerMove(event: PointerEvent) {
   if (event.isPrimary === false) return;
 
-  mouseX = event.clientX - windowHalfX;
-  mouseY = event.clientY - windowHalfY;
+  // mouseX = event.clientX - windowHalfX;
+  // mouseY = event.clientY - windowHalfY;
+
+  // [x, y] 的值范围是 [-1, 1]
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  // 由于 y 轴在 threejs 中是向上的，所以需要取反
+  pointer.y = 1 - (event.clientY / window.innerHeight) * 2;
 }
 
 //
@@ -390,6 +408,8 @@ function render() {
   if (delta > 1) delta = 1; // safety cap on large deltas
   last = now;
 
+  raycaster.setFromCamera(pointer, camera);
+
   positionUniforms["time"].value = now;
   positionUniforms["delta"].value = delta;
   velocityUniforms["time"].value = now;
@@ -397,15 +417,18 @@ function render() {
   birdUniforms["time"].value = now;
   birdUniforms["delta"].value = delta;
 
-  // [-0.5, 0.5] 的范围内
-  velocityUniforms["predator"].value.set(
-    (0.5 * mouseX) / windowHalfX,
-    (-0.5 * mouseY) / windowHalfY,
-    0
-  );
+  // // [-0.5, 0.5] 的范围内
+  // velocityUniforms["predator"].value.set(
+  //   (0.5 * mouseX) / windowHalfX,
+  //   (-0.5 * mouseY) / windowHalfY,
+  //   0
+  // );
 
-  mouseX = 10000;
-  mouseY = 10000;
+  // mouseX = 10000;
+  // mouseY = 10000;
+
+  velocityUniforms["rayOrigin"].value.copy(raycaster.ray.origin);
+  velocityUniforms["rayDirection"].value.copy(raycaster.ray.direction);
 
   gpuCompute.compute();
 
@@ -415,4 +438,7 @@ function render() {
     gpuCompute.getCurrentRenderTarget(velocityVariable).texture;
 
   renderer.render(scene, camera);
+
+  // Move pointer away so we only affect birds when moving the mouse
+  pointer.y = 10;
 }

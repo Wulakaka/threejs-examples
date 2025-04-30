@@ -6,7 +6,9 @@ uniform float alignmentDistance; // 40
 uniform float cohesionDistance; //
 uniform float freedomFactor;
 // 捕食者位置
-uniform vec3 predator;
+// uniform vec3 predator;
+uniform vec3 rayOrigin;
+uniform vec3 rayDirection;
 
 const float width = resolution.x;
 const float height = resolution.y;
@@ -21,8 +23,8 @@ float zoneRadiusSquared = 1600.0;
 float separationThresh = 0.45;
 float alignmentThresh = 0.65;
 
-const float UPPER_BOUNDS = BOUNDS;
-const float LOWER_BOUNDS = -UPPER_BOUNDS;
+// const float UPPER_BOUNDS = BOUNDS;
+// const float LOWER_BOUNDS = -UPPER_BOUNDS;
 
 const float SPEED_LIMIT = 9.0;
 
@@ -62,11 +64,20 @@ void main() {
   // 捕食者方向
   // predator 的 x,y 是 (-0.5, 0.5) 的范围
   // 乘以 UPPER_BOUNDS 是为了近成鼠标位置
-  dir = predator * UPPER_BOUNDS - selfPosition;
-  dir.z = 0.;
+  // dir = predator * UPPER_BOUNDS - selfPosition;
+  // dir.z = 0.;
       // dir.z *= 0.6;
   // 投影到xy平面上的距离，也就是鼠标到鸟的距离
-  dist = length(dir);
+  // dist = length(dir);
+
+  vec3 directionToRay = rayOrigin - selfPosition;
+  float projectionLength = dot(directionToRay, rayDirection);
+  vec3 closestPoint = rayOrigin - rayDirection * projectionLength;
+  vec3 directionToClosestPoint = closestPoint - selfPosition;
+  float distToClosestPoint = length(directionToClosestPoint);
+  dir = directionToClosestPoint;
+  dist = distToClosestPoint;
+
   distSquared = dist * dist;
 
   // 控制多大范围内会受到捕食者的影响
