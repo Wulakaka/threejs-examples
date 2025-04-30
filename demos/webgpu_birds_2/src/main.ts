@@ -1,11 +1,12 @@
 import * as THREE from "three/webgpu";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-
-import "./style.css";
 import { add, positionLocal, sub, varying, vec4 } from "three/tsl";
+import Stats from "stats-gl";
+import "./style.css";
 
 // 可以动态创建，也可以直接使用html中的canvas元素
 let container: HTMLDivElement;
+let stats: Stats;
 
 let camera: THREE.PerspectiveCamera;
 let scene: THREE.Scene;
@@ -30,8 +31,8 @@ function init() {
   scene.fog = new THREE.Fog(0xffffff, 700, 3000);
 
   // Sky
-  {
-    // 半径为 1 为了归一化
+  function addSky() {
+    // 半径为 1 为了 position 从 -1 到 1
     const geometry = new THREE.IcosahedronGeometry(1, 6);
     const material = new THREE.MeshBasicNodeMaterial({
       colorNode: varying(
@@ -48,8 +49,11 @@ function init() {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.z = 0.75;
     mesh.scale.setScalar(1200);
+    // mesh.scale.setScalar(500);
     scene.add(mesh);
   }
+
+  addSky();
 
   renderer = new THREE.WebGPURenderer({ antialias: true, forceWebGL: false });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -60,12 +64,22 @@ function init() {
 
   const controls = new OrbitControls(camera);
   controls.connect(renderer.domElement);
+
+  stats = new Stats({
+    precision: 3,
+    horizontal: false,
+    trackGPU: true,
+    trackCPT: true,
+  });
+
+  stats.init(renderer);
+  container.appendChild(stats.dom);
 }
 
 function animate() {
   render();
   renderer.resolveTimestampsAsync();
-  // stats.update();
+  stats.update();
 }
 
 function render() {
