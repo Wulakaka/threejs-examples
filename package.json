@@ -21,6 +21,7 @@
     "vite": "^6.2.0"
   },
   "dependencies": {
+    "@tresjs/core": "^4.3.3",
     "three": "^0.176.0"
   }
 }

@@ -1,5 +1,6 @@
 packages:
   - examples/*
+  - demos/*
   - packages/*
   - components/**
   - "!**/test/**"
