@@ -34,12 +34,6 @@ importers:
         specifier: ^6.2.0
         version: 6.3.3(@types/node@22.15.3)(jiti@2.4.2)
 
-  demos/webgpu_birds_2:
-    dependencies:
-      stats-gl:
-        specifier: ^3.6.0
-        version: 3.6.0(three@0.176.0)
-
   examples/game: {}
 
   examples/webgl_gpgpu_birds: {}
@@ -47,6 +41,12 @@ importers:
   examples/webgl_gpgpu_birds_gltf: {}
 
   examples/webgl_gpgpu_water: {}
+
+  examples/webgpu_compute_birds:
+    dependencies:
+      stats-gl:
+        specifier: ^3.6.0
+        version: 3.6.0(three@0.176.0)
 
 packages:
 

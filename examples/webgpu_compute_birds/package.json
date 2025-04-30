@@ -1,5 +1,5 @@
 {
-  "name": "webgpu_birds",
+  "name": "webgpu_compute_birds",
   "private": true,
   "version": "0.0.0",
   "type": "module",
