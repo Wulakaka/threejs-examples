@@ -34,11 +34,12 @@ const manager = new THREE.LoadingManager();
 manager.onLoad = init;
 
 const textureLoader = new THREE.TextureLoader(manager);
-textureLoader.load("/vite.svg", (t) => {
+textureLoader.load("/pic.jpeg", (t) => {
   texture = t;
+  const scale = 10;
   // console.log(t.image.width, t.image.height);
-  width = t.image.width;
-  height = t.image.height;
+  width = ~~(t.image.width / scale);
+  height = ~~(t.image.height / scale);
 });
 
 let gpuCompute: GPUComputationRenderer;

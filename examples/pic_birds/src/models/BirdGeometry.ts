@@ -73,6 +73,6 @@ export class BirdGeometry extends THREE.BufferGeometry {
       birdVertex.array[v] = v % 9;
     }
 
-    this.scale(0.8, 0.8, 0.8);
+    this.scale(0.4, 0.4, 0.4);
   }
 }

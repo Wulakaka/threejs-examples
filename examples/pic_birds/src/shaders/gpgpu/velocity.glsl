@@ -100,8 +100,8 @@ void main() {
 
       // Attract flocks to the center
       // 吸引鸟群到中心
-  vec3 central = vec3(0., 0., 0.);
-  // vec3 central = vec3((resolution.x - 0.5) * BOUNDS, (resolution.y - 0.5) * BOUNDS, 0.);
+  // vec3 central = vec3(0., 0., 0.);
+  vec3 central = vec3((uv.x - 0.5) * BOUNDS, (uv.y - 0.5) * BOUNDS, 0.);
   // 远离中心的方向
   dir = selfPosition - central;
   // 距离中心的距离
@@ -110,7 +110,7 @@ void main() {
   // 为什么在 y 方向上扩大？为了使鸟群呈现椭圆，而不是圆形
   dir.y *= 2.5;
   // 增加回到中心的速度
-  velocity -= normalize(dir) * delta * 5.;
+  velocity -= normalize(dir) * delta * 10.;
 
   // 遍历跟每只鸟的距离
   for(float y = 0.0; y < height; y++) {
