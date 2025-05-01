@@ -36,6 +36,8 @@ importers:
 
   examples/game: {}
 
+  examples/pic_birds: {}
+
   examples/webgl_gpgpu_birds: {}
 
   examples/webgl_gpgpu_birds_gltf: {}

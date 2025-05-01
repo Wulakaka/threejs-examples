@@ -8,6 +8,7 @@
     "dev:water": "vite serve examples/webgl_gpgpu_water",
     "dev:game": "vite serve examples/game",
     "dev:webgpu:birds": "vite serve examples/webgpu_compute_birds",
+    "dev:pic_birds": "vite serve examples/pic_birds",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
