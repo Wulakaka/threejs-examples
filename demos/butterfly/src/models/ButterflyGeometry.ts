@@ -32,10 +32,12 @@ export class ButterflyGeometry extends THREE.BufferGeometry {
     verts_push(0.6, -0.3, 0);
     verts_push(0.3, -0.8, 0);
 
-    const butterVertex = new THREE.BufferAttribute(new Float32Array(points), 1);
+    const side = new THREE.BufferAttribute(new Float32Array(points), 1);
     for (let v = 0; v < points; v++) {
-      butterVertex.array[v] = v;
+      side.array[v] = v < points / 2 ? -1 : 1;
     }
-    this.setAttribute("butterVertex", butterVertex);
+    this.setAttribute("aSide", side);
+
+    this.scale(0.5, 0.5, 0.5);
   }
 }

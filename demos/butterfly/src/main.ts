@@ -1,7 +1,9 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/Addons.js";
 import "./style.css";
 import { ButterflyGeometry } from "./models/ButterflyGeometry";
-import { OrbitControls } from "three/examples/jsm/Addons.js";
+import butterflyVertexShader from "@/shaders/butterfly/vertex.glsl?raw";
+import butterflyFragmentShader from "@/shaders/butterfly/fragment.glsl?raw";
 
 function init() {
   const container = document.createElement("div");
@@ -19,14 +21,11 @@ function init() {
 
   window.addEventListener("resize", onWindowResize, false);
 
-  const geometry = new ButterflyGeometry();
-  const material = new THREE.MeshBasicMaterial({
-    color: 0x00ff00,
-    side: THREE.DoubleSide,
-  });
-  const mesh = new THREE.Mesh(geometry, material);
-  scene.add(mesh);
+  const butterflyUniforms = {
+    uTime: { value: 0.0 },
+  };
 
+  initButterfly();
   // 鼠标移动
   const pointer = new THREE.Vector2();
   const raycaster = new THREE.Raycaster();
@@ -63,6 +62,8 @@ function init() {
     raycaster.setFromCamera(pointer, camera);
     // console.log(raycaster.ray.origin, raycaster.ray.direction);
 
+    butterflyUniforms.uTime.value = now;
+
     renderer.render(scene, camera);
   }
 
@@ -78,6 +79,18 @@ function init() {
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
     raycaster.setFromCamera(pointer, camera);
+  }
+
+  function initButterfly() {
+    const geometry = new ButterflyGeometry();
+    const material = new THREE.ShaderMaterial({
+      vertexShader: butterflyVertexShader,
+      fragmentShader: butterflyFragmentShader,
+      uniforms: butterflyUniforms,
+      side: THREE.DoubleSide,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
   }
 }
 
