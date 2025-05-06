@@ -17,6 +17,8 @@ void main() {
   }
 
   vec3 toCentral = vec3(0.0) - tempPos;
+  // 避免出现一直绕圈的现象
+  toCentral.y *= 2.5;
   velocity += normalize(toCentral) * 0.001;
 
   if(length(velocity) > SPEED_LIMIT) {
