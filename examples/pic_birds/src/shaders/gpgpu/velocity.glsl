@@ -101,7 +101,7 @@ void main() {
       // Attract flocks to the center
       // 吸引鸟群到中心
   // vec3 central = vec3(0., 0., 0.);
-  vec3 central = vec3((uv.x - 0.5) * BOUNDS, (uv.y - 0.5) * BOUNDS, 0.);
+  vec3 central = vec3((uv.x - 0.5) * WIDTH * 10.0, (uv.y - 0.5) * HEIGHT * 10.0, 0.);
   // 远离中心的方向
   dir = selfPosition - central;
   // 距离中心的距离

@@ -55,17 +55,17 @@ export class BirdGeometry extends THREE.BufferGeometry {
     }
 
     for (let v = 0; v < triangles * 3; v++) {
-      // ~~ 是 Math.floor 的简写
+      // ~~ 取整
       // 三角形的索引
       const triangleIndex = ~~(v / 3);
       // 鸟的索引
       const birdIndex = ~~(triangleIndex / trianglesPerBird);
       // 横向占比
-      const x = (birdIndex % height) / width;
+      const x = (birdIndex % width) / width;
       // 纵向占比
       const y = ~~(birdIndex / width) / height;
 
-      // 画布的位置信息表示对应的鸟
+      // 画布的位置信息表示对应的鸟，相当于 UV
       references.array[v * 2] = x;
       references.array[v * 2 + 1] = y;
 

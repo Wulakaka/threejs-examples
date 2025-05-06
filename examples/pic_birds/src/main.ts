@@ -85,7 +85,7 @@ function init() {
     scene.add(mesh);
   }
 
-  addPoints();
+  // addPoints();
 
   function addPoints() {
     const geometry = new THREE.BufferGeometry();
@@ -188,6 +188,8 @@ function initComputeRenderer() {
   // // 表示捕食者的位置
   // velocityUniforms["predator"] = { value: new THREE.Vector3() };
   velocityVariable.material.defines.BOUNDS = BOUNDS.toFixed(2);
+  velocityVariable.material.defines.WIDTH = width.toFixed(2);
+  velocityVariable.material.defines.HEIGHT = height.toFixed(2);
 
   // raycaster 的起始位置和方向
   velocityUniforms["rayOrigin"] = { value: new THREE.Vector3() };
@@ -219,7 +221,7 @@ function initComputeRenderer() {
         map: gpuCompute.getCurrentRenderTarget(velocityVariable).texture,
       })
     );
-    debug.velocityMesh.position.x = -100;
+    debug.velocityMesh.position.x = -300;
     debug.velocityMesh.scale.setScalar(4);
     // debug.velocityMesh.visible = false;
     scene.add(debug.velocityMesh);
@@ -230,7 +232,7 @@ function initComputeRenderer() {
         map: gpuCompute.getCurrentRenderTarget(positionVariable).texture,
       })
     );
-    debug.positionMesh.position.x = 100;
+    debug.positionMesh.position.x = 300;
     debug.positionMesh.scale.setScalar(4);
     // debug.positionMesh.visible = false;
     scene.add(debug.positionMesh);
@@ -276,14 +278,14 @@ function fillPositionTexture(texture: THREE.DataTexture) {
   for (let k = 0, kl = theArray.length; k < kl; k += 4) {
     const i = k / 4;
 
-    const x = (i % height) / width;
+    const x = (i % width) / width;
     const y = ~~(i / width) / height;
 
     // 不能设置为 0，会导致程序崩溃
     const z = Math.random() - 0.5;
 
-    theArray[k + 0] = x * BOUNDS - BOUNDS_HALF;
-    theArray[k + 1] = y * BOUNDS - BOUNDS_HALF;
+    theArray[k + 0] = x * width - width / 2;
+    theArray[k + 1] = y * height - height / 2;
     theArray[k + 2] = z;
     theArray[k + 3] = 1;
   }
@@ -316,7 +318,6 @@ function onPointerMove(event: PointerEvent) {
 }
 
 function onWindowResize() {
-  console.log("resize");
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 
