@@ -66,7 +66,7 @@ function init() {
   // scene.fog = new THREE.Fog(0xffffff, 700, 3000);
 
   // Pointer
-  pointer = new THREE.Vector2();
+  pointer = new THREE.Vector2(999, 999);
   raycaster = new THREE.Raycaster();
 
   // addPic();
