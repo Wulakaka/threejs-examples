@@ -23,9 +23,6 @@ float zoneRadiusSquared = 1600.0;
 float separationThresh = 0.45;
 float alignmentThresh = 0.65;
 
-// const float UPPER_BOUNDS = BOUNDS;
-// const float LOWER_BOUNDS = -UPPER_BOUNDS;
-
 const float SPEED_LIMIT = 9.0;
 
 float rand(vec2 co) {
@@ -61,15 +58,8 @@ void main() {
   vec3 velocity = selfVelocity;
 
   float limit = SPEED_LIMIT;
-  // 捕食者方向
-  // predator 的 x,y 是 (-0.5, 0.5) 的范围
-  // 乘以 UPPER_BOUNDS 是为了近成鼠标位置
-  // dir = predator * UPPER_BOUNDS - selfPosition;
-  // dir.z = 0.;
-      // dir.z *= 0.6;
-  // 投影到xy平面上的距离，也就是鼠标到鸟的距离
-  // dist = length(dir);
 
+  // 捕食者方向
   vec3 directionToRay = rayOrigin - selfPosition;
   float projectionLength = dot(directionToRay, rayDirection);
   vec3 closestPoint = rayOrigin - rayDirection * projectionLength;
@@ -101,7 +91,7 @@ void main() {
       // Attract flocks to the center
       // 吸引鸟群到中心
   // vec3 central = vec3(0., 0., 0.);
-  vec3 central = vec3((uv.x - 0.5) * WIDTH * 10.0, (uv.y - 0.5) * HEIGHT * 10.0, 0.);
+  vec3 central = vec3((uv.x - 0.5) * WIDTH * SCALE, (uv.y - 0.5) * HEIGHT * SCALE, 0.);
   // 远离中心的方向
   dir = selfPosition - central;
   // 距离中心的距离

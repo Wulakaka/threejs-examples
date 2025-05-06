@@ -12,8 +12,7 @@ import vertexShader from "./shaders/bird/vertex.glsl?raw";
 import fragmentShader from "./shaders/bird/fragment.glsl?raw";
 import { BirdGeometry } from "./models/BirdGeometry";
 
-const BOUNDS = 800;
-const BOUNDS_HALF = BOUNDS / 2;
+const SCALE = 10;
 // 可以动态创建，也可以直接使用html中的canvas元素
 let container: HTMLDivElement;
 let controls: OrbitControls;
@@ -36,10 +35,9 @@ manager.onLoad = init;
 const textureLoader = new THREE.TextureLoader(manager);
 textureLoader.load("/pic.jpeg", (t) => {
   texture = t;
-  const scale = 10;
   // console.log(t.image.width, t.image.height);
-  width = ~~(t.image.width / scale);
-  height = ~~(t.image.height / scale);
+  width = ~~(t.image.width / SCALE);
+  height = ~~(t.image.height / SCALE);
 });
 
 let gpuCompute: GPUComputationRenderer;
@@ -187,7 +185,7 @@ function initComputeRenderer() {
 
   // // 表示捕食者的位置
   // velocityUniforms["predator"] = { value: new THREE.Vector3() };
-  velocityVariable.material.defines.BOUNDS = BOUNDS.toFixed(2);
+  velocityVariable.material.defines.SCALE = SCALE.toFixed(2);
   velocityVariable.material.defines.WIDTH = width.toFixed(2);
   velocityVariable.material.defines.HEIGHT = height.toFixed(2);
 
@@ -284,8 +282,8 @@ function fillPositionTexture(texture: THREE.DataTexture) {
     // 不能设置为 0，会导致程序崩溃
     const z = Math.random() - 0.5;
 
-    theArray[k + 0] = x * width - width / 2;
-    theArray[k + 1] = y * height - height / 2;
+    theArray[k + 0] = (x * width - width / 2) * SCALE;
+    theArray[k + 1] = (y * height - height / 2) * SCALE;
     theArray[k + 2] = z;
     theArray[k + 3] = 1;
   }
