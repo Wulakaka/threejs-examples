@@ -9,6 +9,7 @@
     "dev:game": "vite serve examples/game",
     "dev:webgpu:birds": "vite serve examples/webgpu_compute_birds",
     "dev:pic_birds": "vite serve examples/pic_birds",
+    "dev:butterfly": "vite serve demos/butterfly",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
