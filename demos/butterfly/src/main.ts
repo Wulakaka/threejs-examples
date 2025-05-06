@@ -3,7 +3,6 @@ import "./style.css";
 import { ButterflyGeometry } from "./models/ButterflyGeometry";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 
-let last = performance.now();
 function init() {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -28,6 +27,10 @@ function init() {
   const mesh = new THREE.Mesh(geometry, material);
   scene.add(mesh);
 
+  // 鼠标移动
+  const pointer = new THREE.Vector2();
+  const raycaster = new THREE.Raycaster();
+
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -39,13 +42,27 @@ function init() {
   controls.target.set(0, 0, 0);
   controls.connect(renderer.domElement);
 
+  container.style.touchAction = "none";
+  container.addEventListener("pointermove", onPointerMove);
+
   function animate() {
+    render();
+  }
+
+  let last = performance.now();
+
+  function render() {
     const now = performance.now();
     let delta = now - last;
     if (delta > 1) {
       delta = 1;
     }
+    last = now;
     controls.update();
+
+    raycaster.setFromCamera(pointer, camera);
+    // console.log(raycaster.ray.origin, raycaster.ray.direction);
+
     renderer.render(scene, camera);
   }
 
@@ -54,6 +71,13 @@ function init() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  }
+
+  function onPointerMove(event: PointerEvent) {
+    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(pointer, camera);
   }
 }
 
