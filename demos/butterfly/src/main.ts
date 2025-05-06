@@ -88,7 +88,6 @@ function init() {
     gpuCompute.compute();
 
     raycaster.setFromCamera(pointer, camera);
-    // console.log(raycaster.ray.origin, raycaster.ray.direction);
 
     butterflyUniforms.uTime.value = now;
     butterflyUniforms.uDelta.value = delta;
@@ -181,7 +180,9 @@ function init() {
     });
     const mesh = new THREE.Mesh(geometry, material);
 
-    mesh.rotation.y = Math.PI / 2;
+    mesh.rotation.x = Math.PI / 2;
+    mesh.rotation.z = -Math.PI / 2;
+
     mesh.matrixAutoUpdate = false;
     mesh.updateMatrix();
 

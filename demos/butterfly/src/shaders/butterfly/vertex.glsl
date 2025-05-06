@@ -24,7 +24,7 @@ void main() {
   newPosition.z = -sin(angle) * dist;
 
   // 转向
-  // 这里 -z 为前方？
+  // 这里 +x 为前方
   newPosition = mat3(modelMatrix) * newPosition;
 
   velocity.z *= -1.;
