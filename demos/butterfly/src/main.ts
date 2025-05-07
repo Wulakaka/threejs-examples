@@ -10,6 +10,7 @@ import butterflyVertexShader from "@/shaders/butterfly/vertex.glsl?raw";
 import butterflyFragmentShader from "@/shaders/butterfly/fragment.glsl?raw";
 import velocityFragmentShader from "@/shaders/gpgpu/velocity.glsl?raw";
 import positionFragmentShader from "@/shaders/gpgpu/position.glsl?raw";
+import directionFragmentShader from "@/shaders/gpgpu/direction.glsl?raw";
 
 function init() {
   const container = document.createElement("div");
@@ -34,11 +35,15 @@ function init() {
     uTextureVelocity: {
       value: null,
     },
+    uTextureDirection: {
+      value: null,
+    },
   };
 
   let gpuCompute: GPUComputationRenderer;
   let velocityVariable: Variable;
   let positionVariable: Variable;
+  let directionVariable: Variable;
 
   let velocityUniforms: THREE.ShaderMaterial["uniforms"];
   let positionUniforms: THREE.ShaderMaterial["uniforms"];
@@ -95,6 +100,8 @@ function init() {
       gpuCompute.getCurrentRenderTarget(velocityVariable).texture;
     butterflyUniforms.uTexturePosition.value =
       gpuCompute.getCurrentRenderTarget(positionVariable).texture;
+    butterflyUniforms.uTextureDirection.value =
+      gpuCompute.getCurrentRenderTarget(directionVariable).texture;
 
     velocityUniforms.uTime.value = now;
     velocityUniforms.uDelta.value = delta;
@@ -125,9 +132,11 @@ function init() {
     // 创建纹理
     const dtVelocity = gpuCompute.createTexture();
     const dtPosition = gpuCompute.createTexture();
+    const dtDirection = gpuCompute.createTexture();
     // 初始化纹理
     fillVelocityTexture(dtVelocity);
     fillPositionTexture(dtPosition);
+    dtDirection.image.data = dtPosition.image.data;
 
     velocityVariable = gpuCompute.addVariable(
       "textureVelocity",
@@ -140,12 +149,22 @@ function init() {
       positionFragmentShader,
       dtPosition
     );
+
+    directionVariable = gpuCompute.addVariable(
+      "textureDirection",
+      directionFragmentShader,
+      dtDirection
+    );
     gpuCompute.setVariableDependencies(velocityVariable, [
       velocityVariable,
       positionVariable,
     ]);
     gpuCompute.setVariableDependencies(positionVariable, [
       positionVariable,
+      velocityVariable,
+    ]);
+    gpuCompute.setVariableDependencies(directionVariable, [
+      directionVariable,
       velocityVariable,
     ]);
 
