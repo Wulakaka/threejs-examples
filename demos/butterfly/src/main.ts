@@ -31,7 +31,7 @@ function init() {
 
   const butterflyUniforms: THREE.ShaderMaterial["uniforms"] = {
     uTime: { value: 0.0 },
-    uDelta: { value: 0.0 },
+    uDelta: { value: 1.0 },
     uTexturePosition: {
       value: null,
     },
@@ -186,14 +186,14 @@ function init() {
     directionUniforms = directionVariable.material.uniforms;
 
     velocityUniforms.uTime = { value: 0.0 };
-    velocityUniforms.uDelta = { value: 0.0 };
+    velocityUniforms.uDelta = { value: 1.0 };
     velocityUniforms.uRayOrigin = { value: new THREE.Vector3() };
     velocityUniforms.uRayDirection = { value: new THREE.Vector3() };
 
     positionUniforms.uTime = { value: 0.0 };
-    positionUniforms.uDelta = { value: 0.0 };
+    positionUniforms.uDelta = { value: 1.0 };
 
-    directionUniforms.uDelta = { value: 0.0 };
+    directionUniforms.uDelta = { value: 1.0 };
     directionUniforms.uRayOrigin = { value: new THREE.Vector3() };
     directionUniforms.uRayDirection = { value: new THREE.Vector3() };
 
