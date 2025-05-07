@@ -48,13 +48,13 @@ void main() {
 
   // 扇动速度
   float phaseVelocity = 1.0 - dot(normalize(velocity), normalize(oldVelocity));
-  phaseVelocity *= 20.0;
+  phaseVelocity *= 15.0;
   phaseVelocity = abs(phaseVelocity);
   // 避免不动
   phaseVelocity = max(phaseVelocity, 0.05);
 
   if(closestDist < 0.05) {
-    phaseVelocity = max(phaseV - 0.0001, 0.0);
+    phaseVelocity = max(phaseV - 0.001, 0.0);
   }
 
   gl_FragColor = vec4(velocity, phaseVelocity);

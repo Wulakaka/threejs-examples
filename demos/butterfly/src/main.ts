@@ -47,6 +47,7 @@ function init() {
 
   let velocityUniforms: THREE.ShaderMaterial["uniforms"];
   let positionUniforms: THREE.ShaderMaterial["uniforms"];
+  let directionUniforms: THREE.ShaderMaterial["uniforms"];
 
   // 鼠标移动
   const pointer = new THREE.Vector2();
@@ -111,6 +112,8 @@ function init() {
     velocityUniforms.uRayOrigin.value = raycaster.ray.origin;
     velocityUniforms.uRayDirection.value = raycaster.ray.direction;
 
+    directionUniforms.uDelta.value = delta;
+
     renderer.render(scene, camera);
   }
 
@@ -170,15 +173,17 @@ function init() {
 
     velocityUniforms = velocityVariable.material.uniforms;
     positionUniforms = positionVariable.material.uniforms;
+    directionUniforms = directionVariable.material.uniforms;
 
     velocityUniforms.uTime = { value: 0.0 };
     velocityUniforms.uDelta = { value: 0.0 };
+    velocityUniforms.uRayOrigin = { value: new THREE.Vector3() };
+    velocityUniforms.uRayDirection = { value: new THREE.Vector3() };
 
     positionUniforms.uTime = { value: 0.0 };
     positionUniforms.uDelta = { value: 0.0 };
 
-    velocityUniforms.uRayOrigin = { value: new THREE.Vector3() };
-    velocityUniforms.uRayDirection = { value: new THREE.Vector3() };
+    directionUniforms.uDelta = { value: 0.0 };
 
     const error = gpuCompute.init();
     if (error !== null) {
