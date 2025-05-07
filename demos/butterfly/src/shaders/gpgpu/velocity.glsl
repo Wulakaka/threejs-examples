@@ -21,7 +21,10 @@ void main() {
 
   // 触发跟随
   if(closestDist < 10.0) {
-    velocity += normalize(toClosest) * 0.02;
+    velocity += normalize(toClosest) * 0.03;
+    if(closestDist < 1.0) {
+      velocity *= 0.6;
+    }
   }
 
   if(length(velocity) > SPEED_LIMIT) {
