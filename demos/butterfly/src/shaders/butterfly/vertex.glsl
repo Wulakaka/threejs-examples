@@ -6,8 +6,9 @@ const float PI = 3.141592653589793;
 void main() {
 
   float phase = texture2D(uTexturePosition, vec2(0.5, 0.5)).w;
-  float angle = sin(phase * 2.0 * PI) * 0.5 + 0.5;
-  angle *= PI * 0.4;
+  // 0 - 1
+  float angle = sin(phase * PI);
+  angle *= PI * 0.45;
   if(aSide < 0.0) {
     angle = PI - angle;
   }
