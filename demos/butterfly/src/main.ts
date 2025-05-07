@@ -12,8 +12,8 @@ import velocityFragmentShader from "@/shaders/gpgpu/velocity.glsl?raw";
 import positionFragmentShader from "@/shaders/gpgpu/position.glsl?raw";
 import directionFragmentShader from "@/shaders/gpgpu/direction.glsl?raw";
 
-const WIDTH = 10;
-const HEIGHT = 10;
+const WIDTH = 3;
+const HEIGHT = 3;
 
 function init() {
   const container = document.createElement("div");
@@ -25,7 +25,7 @@ function init() {
     0.1,
     1000
   );
-  camera.position.z = 50;
+  camera.position.z = 10;
 
   const scene = new THREE.Scene();
 
@@ -53,7 +53,7 @@ function init() {
   let directionUniforms: THREE.ShaderMaterial["uniforms"];
 
   // 鼠标移动
-  const pointer = new THREE.Vector2();
+  const pointer = new THREE.Vector2(10, 10);
   const raycaster = new THREE.Raycaster();
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -74,8 +74,8 @@ function init() {
 
   initButterfly(WIDTH, HEIGHT);
 
-  const box = new THREE.AxesHelper(10);
-  scene.add(box);
+  const box = new THREE.AxesHelper(1);
+  // scene.add(box);
 
   initComputeRenderer(WIDTH, HEIGHT);
 
@@ -130,6 +130,10 @@ function init() {
   function onPointerMove(event: PointerEvent) {
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    if (Math.abs(pointer.x) > 1 || Math.abs(pointer.y) > 1) {
+      pointer.x = 10;
+      pointer.y = 10;
+    }
   }
 
   function initComputeRenderer(w: number, h: number) {
@@ -262,11 +266,12 @@ function fillVelocityTexture(texture: THREE.DataTexture) {
     const x = Math.random() - 0.5;
     const y = Math.random() - 0.5;
     const z = Math.random() - 0.5;
+    const w = Math.random();
 
     theArray[k + 0] = x * 0.01;
     theArray[k + 1] = y * 0.01;
     theArray[k + 2] = z * 0.01;
-    theArray[k + 3] = 1;
+    theArray[k + 3] = w;
   }
 }
 
