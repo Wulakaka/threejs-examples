@@ -5,11 +5,11 @@ const float SPEED_LIMIT = 0.1;
 
 void main() {
   float limit = SPEED_LIMIT;
-
-  vec3 position = texture2D(texturePosition, vec2(0.5, 0.5)).xyz;
-  vec3 velocity = texture2D(textureVelocity, vec2(0.5, 0.5)).xyz;
+  vec2 uv = gl_FragCoord.xy / resolution.xy;
+  vec3 position = texture2D(texturePosition, uv).xyz;
+  vec3 velocity = texture2D(textureVelocity, uv).xyz;
   vec3 oldVelocity = velocity;
-  float phaseV = texture2D(textureVelocity, vec2(0.5, 0.5)).w;
+  float phaseV = texture2D(textureVelocity, uv).w;
 
   vec3 toCentral = vec3(0.0) - position;
   // 避免出现一直绕圈的现象
@@ -58,4 +58,5 @@ void main() {
   }
 
   gl_FragColor = vec4(velocity, phaseVelocity);
+  // gl_FragColor = vec4(.0);
 }

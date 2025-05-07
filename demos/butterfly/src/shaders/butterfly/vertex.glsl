@@ -1,11 +1,12 @@
 uniform sampler2D uTexturePosition;
 uniform sampler2D uTextureDirection;
 attribute float aSide;
+attribute vec2 aReference;
 const float PI = 3.141592653589793;
 
 void main() {
 
-  float phase = texture2D(uTexturePosition, vec2(0.5, 0.5)).w;
+  float phase = texture2D(uTexturePosition, aReference).w;
   // 0 - 1
   float angle = sin(phase * PI);
   angle *= PI * 0.45;
@@ -13,9 +14,9 @@ void main() {
     angle = PI - angle;
   }
 
-  vec3 tempPos = texture2D(uTexturePosition, vec2(0.5, 0.5)).xyz;
+  vec3 tempPos = texture2D(uTexturePosition, aReference).xyz;
   vec3 pos = tempPos;
-  vec3 direction = texture2D(uTextureDirection, vec2(0.5, 0.5)).xyz;
+  vec3 direction = texture2D(uTextureDirection, aReference).xyz;
   direction = normalize(direction);
 
   vec3 newPosition = position;
@@ -24,10 +25,10 @@ void main() {
   newPosition.x = cos(angle) * dist;
   newPosition.z = -sin(angle) * dist;
 
-  // 转向
-  // 这里 +x 为前方
   vec3 modelPosition = mat3(modelMatrix) * newPosition;
 
+  // 转向
+  // 这里 +x 为前方
   direction.z *= -1.;
   float xz = length(direction.xz);
   float xyz = 1.;

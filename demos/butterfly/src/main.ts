@@ -12,6 +12,9 @@ import velocityFragmentShader from "@/shaders/gpgpu/velocity.glsl?raw";
 import positionFragmentShader from "@/shaders/gpgpu/position.glsl?raw";
 import directionFragmentShader from "@/shaders/gpgpu/direction.glsl?raw";
 
+const WIDTH = 10;
+const HEIGHT = 10;
+
 function init() {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -69,12 +72,12 @@ function init() {
 
   window.addEventListener("resize", onWindowResize, false);
 
-  initButterfly();
+  initButterfly(WIDTH, HEIGHT);
 
   const box = new THREE.AxesHelper(10);
   scene.add(box);
 
-  initComputeRenderer();
+  initComputeRenderer(WIDTH, HEIGHT);
 
   function animate() {
     render();
@@ -129,9 +132,9 @@ function init() {
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
   }
 
-  function initComputeRenderer() {
+  function initComputeRenderer(w: number, h: number) {
     // 创建计算渲染器
-    gpuCompute = new GPUComputationRenderer(1, 1, renderer);
+    gpuCompute = new GPUComputationRenderer(w, h, renderer);
     // 创建纹理
     const dtVelocity = gpuCompute.createTexture();
     const dtPosition = gpuCompute.createTexture();
@@ -191,8 +194,8 @@ function init() {
     }
   }
 
-  function initButterfly() {
-    const geometry = new ButterflyGeometry();
+  function initButterfly(width: number, height: number) {
+    const geometry = new ButterflyGeometry(width, height);
     const material = new THREE.ShaderMaterial({
       vertexShader: butterflyVertexShader,
       fragmentShader: butterflyFragmentShader,
@@ -209,6 +212,30 @@ function init() {
 
     scene.add(mesh);
   }
+
+  function addDebugMesh() {
+    {
+      const geometry = new THREE.PlaneGeometry(WIDTH, HEIGHT);
+      const material = new THREE.MeshBasicMaterial({
+        side: THREE.DoubleSide,
+        map: gpuCompute!.getCurrentRenderTarget(positionVariable!).texture,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.x = -WIDTH / 2;
+      scene.add(mesh);
+    }
+
+    {
+      const geometry = new THREE.PlaneGeometry(WIDTH, HEIGHT);
+      const material = new THREE.MeshBasicMaterial({
+        side: THREE.DoubleSide,
+        map: gpuCompute!.getCurrentRenderTarget(velocityVariable!).texture,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.x = WIDTH / 2;
+      scene.add(mesh);
+    }
+  }
 }
 
 function fillPositionTexture(texture: THREE.DataTexture) {
@@ -221,9 +248,9 @@ function fillPositionTexture(texture: THREE.DataTexture) {
     const y = Math.random() - 0.5;
     const z = Math.random() - 0.5;
 
-    theArray[k + 0] = x;
-    theArray[k + 1] = y;
-    theArray[k + 2] = z;
+    theArray[k + 0] = x * 10;
+    theArray[k + 1] = y * 10;
+    theArray[k + 2] = z * 10;
     theArray[k + 3] = 1;
   }
 }
