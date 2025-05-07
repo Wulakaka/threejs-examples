@@ -116,6 +116,8 @@ function init() {
     velocityUniforms.uRayDirection.value = raycaster.ray.direction;
 
     directionUniforms.uDelta.value = delta;
+    directionUniforms.uRayOrigin.value = raycaster.ray.origin;
+    directionUniforms.uRayDirection.value = raycaster.ray.direction;
 
     renderer.render(scene, camera);
   }
@@ -174,8 +176,9 @@ function init() {
       velocityVariable,
     ]);
     gpuCompute.setVariableDependencies(directionVariable, [
-      directionVariable,
       velocityVariable,
+      positionVariable,
+      directionVariable,
     ]);
 
     velocityUniforms = velocityVariable.material.uniforms;
@@ -191,6 +194,8 @@ function init() {
     positionUniforms.uDelta = { value: 0.0 };
 
     directionUniforms.uDelta = { value: 0.0 };
+    directionUniforms.uRayOrigin = { value: new THREE.Vector3() };
+    directionUniforms.uRayDirection = { value: new THREE.Vector3() };
 
     const error = gpuCompute.init();
     if (error !== null) {

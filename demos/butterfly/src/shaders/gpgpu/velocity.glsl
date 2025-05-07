@@ -52,15 +52,14 @@ void main() {
   // 触发跟随
   if(closestDist < 0.5) {
     velocity += normalize(toClosest) * 0.03;
-    if(closestDist < 1.0) {
-      velocity *= 0.6;
-    }
   }
 
+  // 足够近时，停止
   if(closestDist < 0.05) {
     velocity = vec3(0.0, 0.0, 0.0);
   }
 
+  // 距离较近时限速下降
   if(closestDist < 2.0) {
     limit *= pow(closestDist / 2.0, 0.8);
   }
@@ -69,14 +68,16 @@ void main() {
   if(length(oldVelocity) == 0.0) {
     limit *= 0.2;
   }
+
+  // 限制速度
   if(length(velocity) > limit) {
     velocity = normalize(velocity) * limit;
   }
 
   // 扇动速度
   float phaseVelocity = 1.0 - dot(normalize(velocity), normalize(oldVelocity));
-  phaseVelocity *= 15.0;
-  phaseVelocity = abs(phaseVelocity);
+  phaseVelocity *= 7.0;
+
   // 避免不动
   phaseVelocity = max(phaseVelocity, 0.05);
 
