@@ -105,7 +105,6 @@ function init() {
     velocityUniforms.uRayDirection.value = raycaster.ray.direction;
 
     renderer.render(scene, camera);
-    pointer.y = 10;
   }
 
   function onWindowResize() {
@@ -118,8 +117,6 @@ function init() {
   function onPointerMove(event: PointerEvent) {
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    raycaster.setFromCamera(pointer, camera);
   }
 
   function initComputeRenderer() {
