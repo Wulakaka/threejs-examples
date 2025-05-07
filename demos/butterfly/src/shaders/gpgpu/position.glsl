@@ -4,7 +4,7 @@ void main() {
   vec2 uv = gl_FragCoord.xy / resolution.xy;
   vec4 position = texture2D(texturePosition, uv);
   vec4 velocity = texture2D(textureVelocity, uv);
-  position += velocity * 1.0 / uDelta * 0.3;
+  position += velocity * 1.0 / uDelta * 0.003;
   position.w = mod(position.w, 1.0);
   gl_FragColor = position;
 }

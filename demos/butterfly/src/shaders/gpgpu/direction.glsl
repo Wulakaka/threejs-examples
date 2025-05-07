@@ -23,6 +23,6 @@ void main() {
     direction.y = abs((normalize(direction) * 0.01).y);
   }
 
-  direction = mix(from, direction, uDelta * 0.1);
+  direction = mix(from, direction, 1.0 / uDelta * 0.003);
   gl_FragColor = vec4(direction, 1.0);
 }

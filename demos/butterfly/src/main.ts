@@ -83,10 +83,10 @@ function init() {
     render();
   }
 
-  let last = performance.now();
+  let last = performance.now() / 1000;
 
   function render() {
-    const now = performance.now();
+    const now = performance.now() / 1000;
     let delta = now - last;
     if (delta > 1) {
       delta = 1;
