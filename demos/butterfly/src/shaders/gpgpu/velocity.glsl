@@ -1,13 +1,33 @@
 uniform vec3 uRayOrigin;
 uniform vec3 uRayDirection;
+uniform float uDelta;
 
 const float SPEED_LIMIT = 0.1;
 
 const float width = resolution.x;
 const float height = resolution.y;
 
+const float PI = 3.141592653589793;
+const float PI_2 = PI * 2.0;
+
+float separationDistance = 3.0;
+float alignmentDistance = 3.0;
+
 void main() {
   float limit = SPEED_LIMIT;
+
+  float zoneRadius = separationDistance + alignmentDistance;
+
+  float separationThresh = separationDistance / zoneRadius;
+  float alignmentThresh = (separationDistance + alignmentDistance) / zoneRadius;
+
+  float zoneRadiusSquared = zoneRadius * zoneRadius;
+
+  float dist;
+  float distSquared;
+  float f;
+  float percent;
+
   vec2 uv = gl_FragCoord.xy / resolution.xy;
   vec3 position = texture2D(texturePosition, uv).xyz;
   vec3 velocity = texture2D(textureVelocity, uv).xyz;
@@ -17,41 +37,54 @@ void main() {
   vec3 toCentral = vec3(0.0) - position;
   // 避免出现一直绕圈的现象
   toCentral.y *= 2.5;
-  velocity += normalize(toCentral) * 0.001;
+  velocity += normalize(toCentral) * uDelta * 0.1;
 
   for(float y = .0; y < height; y++) {
     for(float x = .0; x < width; x++) {
       vec2 uv2 = vec2(x + 0.5, y + 0.5) / resolution.xy;
       vec3 otherPosition = texture2D(texturePosition, uv2).xyz;
       vec3 toOther = otherPosition - position;
-      float dist = length(toOther);
+      dist = length(toOther);
 
       // 排除自己
       if(dist < 0.0001) {
         continue;
       }
 
-      // 远离其他蝴蝶
-      if(dist < 1.0) {
-        velocity -= normalize(toOther) * 0.1;
-      }
+      distSquared = dist * dist;
 
-      // 吸引其他蝴蝶
-      if(dist > 10.0) {
-        velocity += normalize(toOther) * 0.0005;
+      // 为什么要用平方比
+      percent = distSquared / zoneRadiusSquared;
+      // percent = dist / zoneRadius;
+
+      // 远离其他蝴蝶
+      if(percent < separationThresh) {
+
+        f = (separationThresh / percent - 1.0);
+
+        velocity -= normalize(toOther) * f * uDelta;
+      } else if(percent < alignmentThresh) {
+        float threshDelta = alignmentThresh - separationThresh;
+        float adjustedPercent = (percent - separationThresh) / threshDelta;
+        vec3 otherVelocity = texture2D(textureVelocity, uv2).xyz;
+
+        if(length(otherVelocity) != 0.0) {
+          f = 0.5 - cos(adjustedPercent * PI_2) * 0.5 + 0.5;
+          velocity += normalize(otherVelocity) * f * uDelta;
+        }
       }
     }
   }
 
   vec3 rayOriginToPosition = position - uRayOrigin;
-  float dist = dot(rayOriginToPosition, uRayDirection);
+  dist = dot(rayOriginToPosition, uRayDirection);
   vec3 closestPoint = uRayOrigin + dist * uRayDirection;
   vec3 toClosest = closestPoint - position;
   float closestDist = length(toClosest);
 
   // 触发跟随
   if(closestDist < 0.5) {
-    velocity += normalize(toClosest) * 0.03;
+    velocity += normalize(toClosest) * 0.5 * uDelta;
   }
 
   // 足够近时，停止
