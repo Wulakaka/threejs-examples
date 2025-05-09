@@ -27,7 +27,7 @@ void main() {
 
   vec3 modelPosition = mat3(modelMatrix) * newPosition;
 
-  // 转向
+  // 转向，变为左手坐标系
   // 这里 +x 为前方
   direction.z *= -1.;
   float xz = length(direction.xz);
