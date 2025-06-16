@@ -36,10 +36,16 @@ import {Timer} from "three/addons/misc/Timer.js";
 import {GUI} from "three/addons/libs/lil-gui.module.min.js";
 import WebGPU from "three/addons/capabilities/WebGPU.js";
 
-let camera, scene, renderer, postProcessing, controls, timer, light;
+let camera: THREE.PerspectiveCamera,
+  scene: THREE.Scene,
+  renderer: THREE.WebGPURenderer,
+  postProcessing: THREE.PostProcessing,
+  controls: OrbitControls,
+  timer: Timer,
+  light: THREE.PointLight;
 
 let updateParticles, spawnParticles; // TSL compute nodes
-let getInstanceColor; // TSL function
+let getInstanceColor: THREE.TSL.ShaderNodeFn<any>; // TSL function
 
 const screenPointer = new THREE.Vector2();
 const scenePointer = new THREE.Vector3();
