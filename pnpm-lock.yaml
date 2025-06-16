@@ -49,6 +49,8 @@ importers:
 
   examples/pic_birds: {}
 
+  examples/svg_lines: {}
+
   examples/webgl_gpgpu_birds: {}
 
   examples/webgl_gpgpu_birds_gltf: {}
