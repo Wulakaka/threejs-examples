@@ -1,6 +1,6 @@
 import {Mesh, PerspectiveCamera, PlaneGeometry, Scene} from "three";
 import {WebGPURenderer} from "three/webgpu";
-import {getMaterial} from "./getMaterial";
+import {getMaterial} from "./utils/getMaterial";
 
 async function boot() {
   const container = document.createElement("div");
