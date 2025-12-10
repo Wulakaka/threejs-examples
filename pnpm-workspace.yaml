@@ -1,6 +1,7 @@
 packages:
   - examples/*
   - demos/*
+  - gpu/*
   - packages/*
   - components/**
   - "!**/test/**"

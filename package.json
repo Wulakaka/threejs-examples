@@ -10,6 +10,7 @@
     "dev:webgpu:birds": "vite serve examples/webgpu_compute_birds",
     "dev:pic_birds": "vite serve examples/pic_birds",
     "dev:butterfly": "vite serve demos/butterfly",
+    "dev:shader-patterns": "vite serve gpu/2-shader-patterns",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -26,6 +27,6 @@
   "dependencies": {
     "@tresjs/cientos": "^4.3.0",
     "@tresjs/core": "^4.3.3",
-    "three": "^0.177.0"
+    "three": "^0.181.2"
   }
 }
