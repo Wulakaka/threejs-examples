@@ -37,7 +37,8 @@ export function getMaterial() {
   });
 
   const material = new MeshBasicNodeMaterial({
-    fragmentNode: strength,
+    // 大多数情况使用 colorNode 即可，而不必使用 fragmentNode
+    colorNode: strength,
     positionNode: positionNode(),
     // vertexNode: vec4(positionWorld, 1),
   });
