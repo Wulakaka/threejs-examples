@@ -1,4 +1,11 @@
-import {Mesh, PerspectiveCamera, PlaneGeometry, Scene} from "three";
+import {
+  LinearToneMapping,
+  Mesh,
+  NeutralToneMapping,
+  PerspectiveCamera,
+  PlaneGeometry,
+  Scene,
+} from "three";
 import {WebGPURenderer} from "three/webgpu";
 import {getMaterial} from "./utils/getMaterial";
 
@@ -17,6 +24,7 @@ async function boot() {
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping = LinearToneMapping;
   container.appendChild(renderer.domElement);
 
   // 场景和相机
