@@ -1,4 +1,5 @@
 import {
+  Color,
   LinearToneMapping,
   Mesh,
   PerspectiveCamera,
@@ -6,9 +7,10 @@ import {
   PointLight,
   Scene,
 } from "three";
-import {WebGPURenderer} from "three/webgpu";
+import {MeshBasicNodeMaterial, WebGPURenderer} from "three/webgpu";
 import {getMaterial} from "./utils/getMaterial";
 import {OrbitControls} from "three/examples/jsm/Addons.js";
+// import {circleDecor} from "tsl-textures";
 
 async function boot() {
   const container = document.createElement("div");

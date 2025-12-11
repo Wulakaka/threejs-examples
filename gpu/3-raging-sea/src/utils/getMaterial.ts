@@ -20,6 +20,23 @@ import {
 import {MeshBasicNodeMaterial} from "three/webgpu";
 
 export function getMaterial() {
+// {
+//   // uBigWavesElevation,
+//   // uBigWavesFrequency,
+//   // uBigWaveSpeed,
+//   // uSmallWavesElevation,
+//   // uSmallWavesFrequency,
+//   // uSmallWavesSpeed,
+//   // uSmallIterations,
+// }: {
+//   uBigWavesElevation: ReturnType<typeof float>;
+//   uBigWavesFrequency: ReturnType<typeof vec2>;
+//   uBigWaveSpeed: ReturnType<typeof float>;
+//   uSmallWavesElevation: ReturnType<typeof float>;
+//   uSmallWavesFrequency: ReturnType<typeof float>;
+//   uSmallWavesSpeed: ReturnType<typeof float>;
+//   uSmallIterations: ReturnType<typeof float>;
+// }
   const strength = mul(
     float(0.15).div(
       vec2(uv().x, uv().y.sub(0.5).mul(5).add(0.5)).distance(vec2(0.5))
@@ -30,6 +47,12 @@ export function getMaterial() {
   );
 
   const positionNode = Fn(() => {
+    // const offset = uBigWaveSpeed.mul(time);
+
+    // const elevation = sin(positionLocal.x.mul(uBigWavesFrequency.x).add(offset))
+    //   .mul(sin(positionLocal.z.mul(uBigWavesFrequency.y).add(offset)))
+    //   .mul(uBigWavesElevation);
+
     const z = positionLocal.z.add(
       sin(time.mul(2).add(positionLocal.x)).mul(0.25)
     );
