@@ -1,4 +1,5 @@
 import {
+  Color,
   LinearToneMapping,
   Mesh,
   PerspectiveCamera,
@@ -19,6 +20,14 @@ const uBigWavesElevation = uniform(0.2);
 const uBigWavesFrequency = uniform(new Vector2(4, 1.5));
 
 const uBigWavesSpeed = uniform(0.75);
+
+const uDepthColor = uniform(new Color("#186691"));
+
+const uSurfaceColor = uniform(new Color("#9bd8ff"));
+
+const uColorOffset = uniform(0.08);
+
+const uColorMultiplier = uniform(5);
 
 gui
   .add(uBigWavesElevation, "value")
@@ -47,6 +56,19 @@ gui
   .max(4)
   .step(0.001)
   .name("uBigWavesSpeed");
+
+gui.addColor(uDepthColor, "value").name("uDepthColor");
+
+gui.addColor(uSurfaceColor, "value").name("uSurfaceColor");
+
+gui.add(uColorOffset, "value").min(0).max(1).step(0.001).name("uColorOffset");
+
+gui
+  .add(uColorMultiplier, "value")
+  .min(0)
+  .max(10)
+  .step(0.001)
+  .name("uColorMultiplier");
 
 async function boot() {
   const container = document.createElement("div");
@@ -80,6 +102,10 @@ async function boot() {
     uBigWavesElevation,
     uBigWavesFrequency,
     uBigWavesSpeed,
+    uDepthColor,
+    uSurfaceColor,
+    uColorOffset,
+    uColorMultiplier,
   });
 
   const water = new Mesh(geometry, material);
