@@ -1,69 +1,45 @@
 import {
-  dot,
-  fract,
-  max,
-  min,
   mul,
   sin,
-  uv,
-  vec2,
   vec3,
   vec4,
   Fn,
-  distance,
-  length,
-  float,
   positionLocal,
   time,
-  positionWorld,
+  ShaderNodeObject,
 } from "three/tsl";
-import {MeshBasicNodeMaterial} from "three/webgpu";
+import {MeshBasicNodeMaterial, UniformNode, Vector2} from "three/webgpu";
 
-export function getMaterial() {
-// {
-//   // uBigWavesElevation,
-//   // uBigWavesFrequency,
-//   // uBigWaveSpeed,
-//   // uSmallWavesElevation,
-//   // uSmallWavesFrequency,
-//   // uSmallWavesSpeed,
-//   // uSmallIterations,
-// }: {
-//   uBigWavesElevation: ReturnType<typeof float>;
-//   uBigWavesFrequency: ReturnType<typeof vec2>;
-//   uBigWaveSpeed: ReturnType<typeof float>;
-//   uSmallWavesElevation: ReturnType<typeof float>;
-//   uSmallWavesFrequency: ReturnType<typeof float>;
-//   uSmallWavesSpeed: ReturnType<typeof float>;
-//   uSmallIterations: ReturnType<typeof float>;
-// }
-  const strength = mul(
-    float(0.15).div(
-      vec2(uv().x, uv().y.sub(0.5).mul(5).add(0.5)).distance(vec2(0.5))
-    ),
-    float(0.15).div(
-      vec2(uv().y, uv().x.sub(0.5).mul(5).add(0.5)).distance(vec2(0.5))
-    )
-  );
-
+export function getMaterial({
+  uBigWavesElevation,
+  uBigWavesFrequency,
+  uBigWavesSpeed,
+}: {
+  uBigWavesElevation: ShaderNodeObject<UniformNode<Number>>;
+  uBigWavesFrequency: ShaderNodeObject<UniformNode<Vector2>>;
+  uBigWavesSpeed: ShaderNodeObject<UniformNode<Number>>;
+}) {
   const positionNode = Fn(() => {
-    // const offset = uBigWaveSpeed.mul(time);
-
-    // const elevation = sin(positionLocal.x.mul(uBigWavesFrequency.x).add(offset))
-    //   .mul(sin(positionLocal.z.mul(uBigWavesFrequency.y).add(offset)))
-    //   .mul(uBigWavesElevation);
-
-    const z = positionLocal.z.add(
-      sin(time.mul(2).add(positionLocal.x)).mul(0.25)
+    // Elevation 中文意思是“海拔，高度”
+    const elevation = mul(
+      sin(
+        positionLocal.x.mul(uBigWavesFrequency.x).add(time.mul(uBigWavesSpeed))
+      ),
+      sin(
+        positionLocal.y.mul(uBigWavesFrequency.y).add(time.mul(uBigWavesSpeed))
+      ),
+      uBigWavesElevation
     );
+
+    const z = positionLocal.z.add(elevation);
+
     return vec3(positionLocal.x, positionLocal.y, z);
   });
 
   const material = new MeshBasicNodeMaterial({
     // 大多数情况使用 colorNode 即可，而不必使用 fragmentNode
-    colorNode: strength,
+    colorNode: vec4(0.5, 0.8, 1.0, 1.0),
     positionNode: positionNode(),
-    // vertexNode: vec4(positionWorld, 1),
   });
   return material;
 }

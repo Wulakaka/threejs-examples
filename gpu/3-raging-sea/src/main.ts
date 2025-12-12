@@ -1,16 +1,52 @@
 import {
-  Color,
   LinearToneMapping,
   Mesh,
   PerspectiveCamera,
   PlaneGeometry,
-  PointLight,
   Scene,
+  Vector2,
 } from "three";
-import {MeshBasicNodeMaterial, WebGPURenderer} from "three/webgpu";
+import {WebGPURenderer} from "three/webgpu";
 import {getMaterial} from "./utils/getMaterial";
 import {OrbitControls} from "three/examples/jsm/Addons.js";
-// import {circleDecor} from "tsl-textures";
+import {uniform} from "three/tsl";
+import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
+
+const gui = new GUI({width: 300});
+
+const uBigWavesElevation = uniform(0.2);
+
+const uBigWavesFrequency = uniform(new Vector2(4, 1.5));
+
+const uBigWavesSpeed = uniform(0.75);
+
+gui
+  .add(uBigWavesElevation, "value")
+  .min(0)
+  .max(1)
+  .step(0.001)
+  .name("uBigWavesElevation");
+
+gui
+  .add(uBigWavesFrequency.value, "x")
+  .min(0)
+  .max(10)
+  .step(0.001)
+  .name("uBigWavesFrequencyX");
+
+gui
+  .add(uBigWavesFrequency.value, "y")
+  .min(0)
+  .max(10)
+  .step(0.001)
+  .name("uBigWavesFrequencyY");
+
+gui
+  .add(uBigWavesSpeed, "value")
+  .min(0)
+  .max(4)
+  .step(0.001)
+  .name("uBigWavesSpeed");
 
 async function boot() {
   const container = document.createElement("div");
@@ -40,7 +76,11 @@ async function boot() {
 
   // 几何 + 最小 TSL 节点材质；随时间变色
   const geometry = new PlaneGeometry(2, 2, 512, 512);
-  const material = getMaterial();
+  const material = getMaterial({
+    uBigWavesElevation,
+    uBigWavesFrequency,
+    uBigWavesSpeed,
+  });
 
   const water = new Mesh(geometry, material);
 
@@ -52,11 +92,6 @@ async function boot() {
   const controls = new OrbitControls(camera, renderer.domElement);
 
   controls.enableDamping = true;
-
-  // light
-  // const pointLight = new PointLight("green", 1, 100);
-  // pointLight.position.set(2, 2, 2);
-  // scene.add(pointLight);
 
   // 自适应
   function resize() {
