@@ -3,12 +3,12 @@ import {
   sin,
   vec3,
   vec4,
-  Fn,
   positionLocal,
   time,
   ShaderNodeObject,
   mix,
   add,
+  mx_fractal_noise_float,
 } from "three/tsl";
 import {Color, MeshBasicNodeMaterial, UniformNode, Vector2} from "three/webgpu";
 
@@ -29,6 +29,12 @@ export function getMaterial({
   uColorOffset: ShaderNodeObject<UniformNode<Number>>;
   uColorMultiplier: ShaderNodeObject<UniformNode<Number>>;
 }) {
+  const noise = mx_fractal_noise_float(
+    vec3(positionLocal.xy.mul(2), time.mul(0.2))
+  )
+    .mul(0.15)
+    .abs();
+
   // Elevation 中文意思是“海拔，高度”
   const elevation = mul(
     sin(
@@ -38,7 +44,7 @@ export function getMaterial({
       positionLocal.y.mul(uBigWavesFrequency.y).add(time.mul(uBigWavesSpeed))
     ),
     uBigWavesElevation
-  );
+  ).sub(noise);
 
   const z = positionLocal.z.add(elevation);
 
