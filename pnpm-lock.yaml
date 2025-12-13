@@ -10,13 +10,13 @@ importers:
     dependencies:
       '@tresjs/cientos':
         specifier: ^4.3.0
-        version: 4.3.0(@tresjs/core@4.3.3(three@0.181.2)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3)))(@types/three@0.175.0)(three@0.181.2)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))
+        version: 4.3.0(@tresjs/core@4.3.3(three@0.182.0)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3)))(@types/three@0.175.0)(three@0.182.0)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))
       '@tresjs/core':
         specifier: ^4.3.3
-        version: 4.3.3(three@0.181.2)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))
+        version: 4.3.3(three@0.182.0)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))
       three:
-        specifier: ^0.181.2
-        version: 0.181.2
+        specifier: ^0.182.0
+        version: 0.182.0
       tsl-textures:
         specifier: ^2.5.1
         version: 2.5.1
@@ -64,7 +64,7 @@ importers:
     dependencies:
       stats-gl:
         specifier: ^3.6.0
-        version: 3.6.0(three@0.181.2)
+        version: 3.6.0(three@0.182.0)
 
   examples/webgpu_tsl_vfx_linkedparticles: {}
 
@@ -640,8 +640,8 @@ packages:
     peerDependencies:
       three: '>=0.128.0'
 
-  three@0.181.2:
-    resolution: {integrity: sha512-k/CjiZ80bYss6Qs7/ex1TBlPD11whT9oKfT8oTGiHa34W4JRd1NiH/Tr1DbHWQ2/vMUypxksLnF2CfmlmM5XFQ==}
+  three@0.182.0:
+    resolution: {integrity: sha512-GbHabT+Irv+ihI1/f5kIIsZ+Ef9Sl5A1Y7imvS5RQjWgtTPfPnZ43JmlYI7NtCRDK9zir20lQpfg8/9Yd02OvQ==}
 
   through2@0.6.5:
     resolution: {integrity: sha512-RkK/CCESdTKQZHdmKICijdKKsCRVHs5KsLZ6pACAmF/1GPUQhonHSXWNERctxEp7RmvjdNbZTL5z9V7nSCXKcg==}
@@ -897,16 +897,16 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.40.0':
     optional: true
 
-  '@tresjs/cientos@4.3.0(@tresjs/core@4.3.3(three@0.181.2)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3)))(@types/three@0.175.0)(three@0.181.2)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))':
+  '@tresjs/cientos@4.3.0(@tresjs/core@4.3.3(three@0.182.0)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3)))(@types/three@0.175.0)(three@0.182.0)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))':
     dependencies:
-      '@tresjs/core': 4.3.3(three@0.181.2)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))
+      '@tresjs/core': 4.3.3(three@0.182.0)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))
       '@vueuse/core': 12.8.2(typescript@5.7.3)
-      camera-controls: 2.10.1(three@0.181.2)
-      stats-gl: 2.4.2(@types/three@0.175.0)(three@0.181.2)
+      camera-controls: 2.10.1(three@0.182.0)
+      stats-gl: 2.4.2(@types/three@0.175.0)(three@0.182.0)
       stats.js: 0.17.0
-      three: 0.181.2
-      three-custom-shader-material: 5.4.0(three@0.181.2)
-      three-stdlib: 2.36.0(three@0.181.2)
+      three: 0.182.0
+      three-custom-shader-material: 5.4.0(three@0.182.0)
+      three-stdlib: 2.36.0(three@0.182.0)
       vue: 3.5.13(typescript@5.7.3)
     transitivePeerDependencies:
       - '@react-three/fiber'
@@ -914,12 +914,12 @@ snapshots:
       - react
       - typescript
 
-  '@tresjs/core@4.3.3(three@0.181.2)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))':
+  '@tresjs/core@4.3.3(three@0.182.0)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))':
     dependencies:
       '@alvarosabu/utils': 3.2.0
       '@vue/devtools-api': 6.6.4
       '@vueuse/core': 12.8.2(typescript@5.7.3)
-      three: 0.181.2
+      three: 0.182.0
       vue: 3.5.13(typescript@5.7.3)
     transitivePeerDependencies:
       - typescript
@@ -1029,9 +1029,9 @@ snapshots:
 
   acorn@8.14.1: {}
 
-  camera-controls@2.10.1(three@0.181.2):
+  camera-controls@2.10.1(three@0.182.0):
     dependencies:
-      three: 0.181.2
+      three: 0.182.0
 
   confbox@0.1.8: {}
 
@@ -1201,14 +1201,14 @@ snapshots:
 
   source-map-js@1.2.1: {}
 
-  stats-gl@2.4.2(@types/three@0.175.0)(three@0.181.2):
+  stats-gl@2.4.2(@types/three@0.175.0)(three@0.182.0):
     dependencies:
       '@types/three': 0.175.0
-      three: 0.181.2
+      three: 0.182.0
 
-  stats-gl@3.6.0(three@0.181.2):
+  stats-gl@3.6.0(three@0.182.0):
     optionalDependencies:
-      three: 0.181.2
+      three: 0.182.0
 
   stats.js@0.17.0: {}
 
@@ -1218,15 +1218,15 @@ snapshots:
     dependencies:
       js-tokens: 9.0.1
 
-  three-custom-shader-material@5.4.0(three@0.181.2):
+  three-custom-shader-material@5.4.0(three@0.182.0):
     dependencies:
       glsl-token-functions: 1.0.1
       glsl-token-string: 1.0.1
       glsl-tokenizer: 2.1.5
       object-hash: 3.0.0
-      three: 0.181.2
+      three: 0.182.0
 
-  three-stdlib@2.36.0(three@0.181.2):
+  three-stdlib@2.36.0(three@0.182.0):
     dependencies:
       '@types/draco3d': 1.4.10
       '@types/offscreencanvas': 2019.7.3
@@ -1234,9 +1234,9 @@ snapshots:
       draco3d: 1.5.7
       fflate: 0.6.10
       potpack: 1.0.2
-      three: 0.181.2
+      three: 0.182.0
 
-  three@0.181.2: {}
+  three@0.182.0: {}
 
   through2@0.6.5:
     dependencies:
