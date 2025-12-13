@@ -29,6 +29,14 @@ const uColorOffset = uniform(0.08);
 
 const uColorMultiplier = uniform(5);
 
+const uSmallWavesElevation = uniform(0.15);
+
+const uSmallWavesFrequency = uniform(3);
+
+const uSmallWavesSpeed = uniform(0.2);
+
+const uSmallIterations = uniform(4);
+
 gui
   .add(uBigWavesElevation, "value")
   .min(0)
@@ -70,6 +78,34 @@ gui
   .step(0.001)
   .name("uColorMultiplier");
 
+gui
+  .add(uSmallWavesElevation, "value")
+  .min(0)
+  .max(1)
+  .step(0.001)
+  .name("uSmallWavesElevation");
+
+gui
+  .add(uSmallWavesFrequency, "value")
+  .min(0)
+  .max(30)
+  .step(0.001)
+  .name("uSmallWavesFrequency");
+
+gui
+  .add(uSmallWavesSpeed, "value")
+  .min(0)
+  .max(4)
+  .step(0.001)
+  .name("uSmallWavesSpeed");
+
+gui
+  .add(uSmallIterations, "value")
+  .min(0)
+  .max(8)
+  .step(1)
+  .name("uSmallIterations");
+
 async function boot() {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -106,6 +142,10 @@ async function boot() {
     uSurfaceColor,
     uColorOffset,
     uColorMultiplier,
+    uSmallWavesElevation,
+    uSmallWavesFrequency,
+    uSmallWavesSpeed,
+    uSmallIterations,
   });
 
   const water = new Mesh(geometry, material);
