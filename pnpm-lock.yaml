@@ -74,6 +74,8 @@ importers:
 
   gpu/3-raging-sea: {}
 
+  gpu/4-animated-galaxy: {}
+
 packages:
 
   '@alvarosabu/utils@3.2.0':

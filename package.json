@@ -12,6 +12,7 @@
     "dev:butterfly": "vite serve demos/butterfly",
     "dev:shader-patterns": "vite serve gpu/2-shader-patterns",
     "dev:sea": "vite serve gpu/3-raging-sea",
+    "dev:galaxy": "vite serve gpu/4-animated-galaxy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
