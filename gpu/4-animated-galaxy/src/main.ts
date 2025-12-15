@@ -3,9 +3,18 @@ import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 import {
   attribute,
+  distance,
+  float,
+  Fn,
   instancedArray,
   instancedBufferAttribute,
+  length,
+  positionLocal,
+  spritesheetUV,
+  step,
   uniform,
+  uv,
+  vec2,
   vec4,
 } from "three/tsl";
 
@@ -98,15 +107,22 @@ const generateGalaxy = () => {
   const colorAttribute = new THREE.InstancedBufferAttribute(colors, 3);
   const scaleAttribute = new THREE.InstancedBufferAttribute(scales, 1);
 
+  // const color = Fn(() => {})
+  // Diffuse point
+  const color = distance(vec2(0.5), uv()).step(0.5).oneMinus();
+
   // Material
   material = new THREE.SpriteNodeMaterial({
     positionNode: instancedBufferAttribute(positionAttribute),
-    colorNode: instancedBufferAttribute(colorAttribute),
+    // colorNode: instancedBufferAttribute(colorAttribute),
+    colorNode: vec4(color),
     sizeAttenuation: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   });
-  material.scaleNode = instancedBufferAttribute(scaleAttribute).mul(size);
+  material.scaleNode = instancedBufferAttribute(scaleAttribute)
+    .mul(size)
+    .mul(renderer.getPixelRatio());
 
   // Points
   points = new THREE.Sprite(material);
