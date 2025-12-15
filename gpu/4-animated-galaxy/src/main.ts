@@ -1,6 +1,13 @@
 import * as THREE from "three/webgpu";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
+import {
+  attribute,
+  instancedArray,
+  instancedBufferAttribute,
+  uniform,
+  vec4,
+} from "three/tsl";
 
 const gui = new GUI();
 
@@ -13,9 +20,10 @@ container.appendChild(canvas);
 // Scene
 const scene = new THREE.Scene();
 
+const size = uniform(0.02);
+
 const parameters = {
   count: 20000,
-  size: 0.005,
   radius: 5,
   branches: 3,
   spin: 1,
@@ -26,8 +34,8 @@ const parameters = {
 };
 
 let geometry: THREE.BufferGeometry;
-let material: THREE.PointsMaterial;
-let points: THREE.Points;
+let material: THREE.SpriteNodeMaterial;
+let points: THREE.Sprite;
 
 const generateGalaxy = () => {
   if (points !== undefined) {
@@ -40,6 +48,7 @@ const generateGalaxy = () => {
 
   const positions = new Float32Array(parameters.count * 3);
   const colors = new Float32Array(parameters.count * 3);
+  const scales = new Float32Array(parameters.count * 1);
 
   const colorInside = new THREE.Color(parameters.insideColor);
   const colorOutside = new THREE.Color(parameters.outsideColor);
@@ -80,26 +89,31 @@ const generateGalaxy = () => {
     colors[i3] = mixedColor.r;
     colors[i3 + 1] = mixedColor.g;
     colors[i3 + 2] = mixedColor.b;
+
+    // Scale
+    scales[i] = Math.random();
   }
 
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  const positionAttribute = new THREE.InstancedBufferAttribute(positions, 3);
+  const colorAttribute = new THREE.InstancedBufferAttribute(colors, 3);
+  const scaleAttribute = new THREE.InstancedBufferAttribute(scales, 1);
 
   // Material
-  material = new THREE.PointsMaterial({
-    size: parameters.size,
+  material = new THREE.SpriteNodeMaterial({
+    positionNode: instancedBufferAttribute(positionAttribute),
+    colorNode: instancedBufferAttribute(colorAttribute),
     sizeAttenuation: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    vertexColors: true,
   });
+  material.scaleNode = instancedBufferAttribute(scaleAttribute).mul(size);
 
   // Points
-  points = new THREE.Points(geometry, material);
+  points = new THREE.Sprite(material);
+
+  points.count = parameters.count;
   scene.add(points);
 };
-
-// generateGalaxy();
 
 gui
   .add(parameters, "count")
@@ -180,30 +194,22 @@ controls.enableDamping = true;
  */
 const renderer = new THREE.WebGPURenderer({
   canvas: canvas,
+  alpha: true,
 });
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-/**
- * Animate
- */
-const clock = new THREE.Clock();
-
-const tick = () => {
-  const elapsedTime = clock.getElapsedTime();
-
-  // Update controls
-  controls.update();
-
-  // Render
-  renderer.render(scene, camera);
-
-  // Call tick again on the next frame
-  window.requestAnimationFrame(tick);
-};
-
 renderer.init().then(() => {
-  console.log("WebGPU initialized successfully.");
   generateGalaxy();
-  tick();
+
+  /**
+   * Animate
+   */
+  renderer.setAnimationLoop(() => {
+    // Update controls
+    controls.update();
+
+    // Render
+    renderer.render(scene, camera);
+  });
 });

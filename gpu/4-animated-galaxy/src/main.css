@@ -8,6 +8,10 @@ body {
 	overflow: hidden;
 }
 
+body {
+	background-color: #000000;
+}
+
 canvas {
 	position: fixed;
 	top: 0;
