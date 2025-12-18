@@ -3,6 +3,7 @@ import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 import {
   atan,
+  color,
   cos,
   distance,
   float,
@@ -11,6 +12,7 @@ import {
   length,
   mix,
   sin,
+  texture,
   time,
   uniform,
   uv,
@@ -20,6 +22,7 @@ import {
 } from "three/tsl";
 import {GLTFLoader} from "three/examples/jsm/Addons.js";
 import model from "@/assets/bakedModel.glb?url";
+import img from "@/assets/perlin.png";
 
 const gui = new GUI();
 
@@ -34,6 +37,8 @@ const scene = new THREE.Scene();
 
 // Loaders
 const gltfLoader = new GLTFLoader();
+
+const textureLoader = new THREE.TextureLoader();
 
 /**
  * Sizes
@@ -94,6 +99,23 @@ gltfLoader.load(model, (gltf) => {
   )).map!.anisotropy = 8;
   scene.add(gltf.scene);
 });
+
+const t = textureLoader.load(img);
+
+// Smoke
+const smokeGeometry = new THREE.PlaneGeometry(1, 1, 16, 64);
+smokeGeometry.translate(0, 0.5, 0);
+smokeGeometry.scale(1.5, 6, 1.5);
+
+// Material
+const smokeMaterial = new THREE.MeshBasicNodeMaterial({
+  colorNode: texture(t, uv()),
+  side: THREE.DoubleSide,
+});
+
+const smoke = new THREE.Mesh(smokeGeometry, smokeMaterial);
+smoke.position.y = 1.83;
+scene.add(smoke);
 
 renderer.init().then(() => {
   /**
