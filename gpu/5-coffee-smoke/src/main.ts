@@ -126,8 +126,8 @@ const positionNode = Fn(() => {
     perlinTexture,
     vec2(0.5, uv().y.mul(0.2).sub(time.mul(0.005)))
   ).x;
-  const angle = twistPerlin.mul(10);
-
+  const angle = twistPerlin.sub(0.5).mul(10);
+  // xz 平面旋转
   const xz = rotate(positionLocal.xz, angle);
 
   // Wind
