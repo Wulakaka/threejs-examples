@@ -1,7 +1,18 @@
 import * as THREE from "three/webgpu";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
-import {Fn, smoothstep, texture, time, uv, vec2, vec4} from "three/tsl";
+import {
+  Fn,
+  positionLocal,
+  rotate,
+  smoothstep,
+  texture,
+  time,
+  uv,
+  vec2,
+  vec3,
+  vec4,
+} from "three/tsl";
 import {GLTFLoader} from "three/examples/jsm/Addons.js";
 import model from "@/assets/bakedModel.glb?url";
 import img from "@/assets/perlin.png";
@@ -70,6 +81,7 @@ controls.enableDamping = true;
 const renderer = new THREE.WebGPURenderer({
   canvas: canvas,
   alpha: true,
+  antialias: true,
 });
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -108,9 +120,37 @@ const colorNode = Fn(() => {
   return vec4(0.6, 0.3, 0.2, smoke);
 });
 
+const positionNode = Fn(() => {
+  // Twist
+  const twistPerlin = texture(
+    perlinTexture,
+    vec2(0.5, uv().y.mul(0.2).sub(time.mul(0.005)))
+  ).x;
+  const angle = twistPerlin.mul(10);
+
+  const xz = rotate(positionLocal.xz, angle);
+
+  // Wind
+  const windOffset = vec2(
+    texture(perlinTexture, vec2(0.25, time.mul(0.01))).x.sub(0.5),
+    texture(perlinTexture, vec2(0.75, time.mul(0.01))).x.sub(0.5)
+  );
+
+  // y 越高，风力越大
+  windOffset.mulAssign(uv().y.pow(2).mul(10));
+
+  xz.addAssign(windOffset);
+
+  return vec3(xz.x, positionLocal.y, xz.y);
+});
+
 // Material
 const smokeMaterial = new THREE.MeshBasicNodeMaterial({
   colorNode: colorNode(),
+  // color: "red",
+  positionNode: positionNode(),
+  depthWrite: false,
+  // wireframe: true,
   side: THREE.DoubleSide,
   transparent: true,
 });
