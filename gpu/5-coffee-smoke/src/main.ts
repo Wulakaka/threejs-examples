@@ -1,25 +1,7 @@
 import * as THREE from "three/webgpu";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
-import {
-  atan,
-  color,
-  cos,
-  distance,
-  float,
-  Fn,
-  instancedBufferAttribute,
-  length,
-  mix,
-  sin,
-  texture,
-  time,
-  uniform,
-  uv,
-  vec2,
-  vec3,
-  vec4,
-} from "three/tsl";
+import {Fn, smoothstep, texture, time, uv, vec2, vec4} from "three/tsl";
 import {GLTFLoader} from "three/examples/jsm/Addons.js";
 import model from "@/assets/bakedModel.glb?url";
 import img from "@/assets/perlin.png";
@@ -100,17 +82,37 @@ gltfLoader.load(model, (gltf) => {
   scene.add(gltf.scene);
 });
 
-const t = textureLoader.load(img);
+const perlinTexture = textureLoader.load(img);
+perlinTexture.wrapS = THREE.RepeatWrapping;
+perlinTexture.wrapT = THREE.RepeatWrapping;
 
 // Smoke
 const smokeGeometry = new THREE.PlaneGeometry(1, 1, 16, 64);
 smokeGeometry.translate(0, 0.5, 0);
 smokeGeometry.scale(1.5, 6, 1.5);
 
+const colorNode = Fn(() => {
+  // Scale and animate
+  const uvX = uv().x.mul(0.5);
+  const uvY = uv().y.mul(0.3).sub(time.mul(0.03));
+
+  const smokeUv = vec2(uvX, uvY);
+
+  const smoke = texture(perlinTexture, smokeUv).x.smoothstep(0.4, 1.0);
+  smoke
+    .mulAssign(smoothstep(0, 0.1, uv().x))
+    .mulAssign(smoothstep(1, 0.9, uv().x))
+    .mulAssign(smoothstep(0, 0.1, uv().y))
+    .mulAssign(smoothstep(1, 0.4, uv().y));
+
+  return vec4(0.6, 0.3, 0.2, smoke);
+});
+
 // Material
 const smokeMaterial = new THREE.MeshBasicNodeMaterial({
-  colorNode: texture(t, uv()),
+  colorNode: colorNode(),
   side: THREE.DoubleSide,
+  transparent: true,
 });
 
 const smoke = new THREE.Mesh(smokeGeometry, smokeMaterial);
