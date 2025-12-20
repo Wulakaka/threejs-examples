@@ -2,12 +2,17 @@ import * as THREE from "three/webgpu";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 import {
+  atan,
+  cameraPosition,
+  cos,
   Fn,
   positionLocal,
   rotate,
+  sin,
   smoothstep,
   texture,
   time,
+  uniform,
   uv,
   vec2,
   vec3,
@@ -18,6 +23,22 @@ import model from "@/assets/bakedModel.glb?url";
 import img from "@/assets/perlin.png";
 
 const gui = new GUI();
+
+const smokeSpeed = uniform(0.005);
+const smokePatternSpeed = uniform(0.03);
+
+const smokeColor = uniform(new THREE.Color(0.6, 0.3, 0.2), "color");
+
+const windDirection = uniform(0.0, "float");
+const windStrength = uniform(0.0, "float");
+
+gui.add(smokeSpeed, "value", 0, 1, 0.001).name("Smoke Speed");
+gui.add(smokePatternSpeed, "value", 0, 1, 0.001).name("Smoke Pattern Speed");
+
+gui.addColor(smokeColor, "value").name("Smoke Color");
+
+gui.add(windDirection, "value", -Math.PI, Math.PI, 0.01).name("Wind Direction");
+gui.add(windStrength, "value", 0, 1, 0.01).name("Wind Strength");
 
 const container = document.createElement("div");
 document.body.appendChild(container);
@@ -53,6 +74,18 @@ window.addEventListener("resize", () => {
   // Update renderer
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
+
+window.addEventListener("mousemove", (e) => {
+  console.log(e.clientX, e.clientY);
+  const x = e.clientX - window.innerWidth / 2;
+  const y = -(e.clientY - window.innerHeight / 2);
+  const angle = Math.atan2(y, x);
+  windDirection.value = angle;
+  windStrength.value = Math.sqrt(
+    Math.pow(x / (window.innerWidth / 2), 2) +
+      Math.pow(y / (window.innerHeight / 2), 2)
+  );
 });
 
 /**
@@ -106,7 +139,7 @@ smokeGeometry.scale(1.5, 6, 1.5);
 const colorNode = Fn(() => {
   // Scale and animate
   const uvX = uv().x.mul(0.5);
-  const uvY = uv().y.mul(0.3).sub(time.mul(0.03));
+  const uvY = uv().y.mul(0.3).sub(time.mul(smokePatternSpeed));
 
   const smokeUv = vec2(uvX, uvY);
 
@@ -117,23 +150,37 @@ const colorNode = Fn(() => {
     .mulAssign(smoothstep(0, 0.1, uv().y))
     .mulAssign(smoothstep(1, 0.4, uv().y));
 
-  return vec4(0.6, 0.3, 0.2, smoke);
+  return vec4(smokeColor, smoke);
 });
 
 const positionNode = Fn(() => {
   // Twist
   const twistPerlin = texture(
     perlinTexture,
-    vec2(0.5, uv().y.mul(0.2).sub(time.mul(0.005)))
+    vec2(0.5, uv().y.mul(0.2).sub(time.mul(smokeSpeed)))
   ).x;
   const angle = twistPerlin.sub(0.5).mul(10);
   // xz 平面旋转
   const xz = rotate(positionLocal.xz, angle);
 
+  const cameraAngle = atan(cameraPosition.z, cameraPosition.x);
+
   // Wind
   const windOffset = vec2(
-    texture(perlinTexture, vec2(0.25, time.mul(0.01))).x.sub(0.5),
-    texture(perlinTexture, vec2(0.75, time.mul(0.01))).x.sub(0.5)
+    texture(perlinTexture, vec2(0.25, time.mul(0.01)))
+      .x.sub(0.5)
+      .add(
+        cos(cameraAngle.sub(windDirection).add(Math.PI / 2))
+          .mul(windStrength)
+          .mul(0.5)
+      ),
+    texture(perlinTexture, vec2(0.75, time.mul(0.01)))
+      .x.sub(0.5)
+      .add(
+        sin(cameraAngle.sub(windDirection).add(Math.PI / 2))
+          .mul(windStrength)
+          .mul(0.5)
+      )
   );
 
   // y 越高，风力越大
