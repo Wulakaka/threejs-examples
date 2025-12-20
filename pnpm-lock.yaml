@@ -14,6 +14,9 @@ importers:
       '@tresjs/core':
         specifier: ^4.3.3
         version: 4.3.3(three@0.182.0)(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))
+      gsap:
+        specifier: ^3.14.2
+        version: 3.14.2
       three:
         specifier: ^0.182.0
         version: 0.182.0
@@ -522,6 +525,9 @@ packages:
 
   glsl-tokenizer@2.1.5:
     resolution: {integrity: sha512-XSZEJ/i4dmz3Pmbnpsy3cKh7cotvFlBiZnDOwnj/05EwNp2XrhQ4XKJxT7/pDt4kp4YcpRSKz8eTV7S+mwV6MA==}
+
+  gsap@3.14.2:
+    resolution: {integrity: sha512-P8/mMxVLU7o4+55+1TCnQrPmgjPKnwkzkXOK1asnR9Jg2lna4tEY5qBJjMmAaOBDDZWtlRjBXjLa0w53G/uBLA==}
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
@@ -1105,6 +1111,8 @@ snapshots:
   glsl-tokenizer@2.1.5:
     dependencies:
       through2: 0.6.5
+
+  gsap@3.14.2: {}
 
   inherits@2.0.4: {}
 

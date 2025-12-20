@@ -21,6 +21,7 @@ import {
 import {GLTFLoader} from "three/examples/jsm/Addons.js";
 import model from "@/assets/bakedModel.glb?url";
 import img from "@/assets/perlin.png";
+import gsap from "gsap";
 
 const gui = new GUI();
 
@@ -77,15 +78,22 @@ window.addEventListener("resize", () => {
 });
 
 window.addEventListener("mousemove", (e) => {
-  console.log(e.clientX, e.clientY);
   const x = e.clientX - window.innerWidth / 2;
   const y = -(e.clientY - window.innerHeight / 2);
   const angle = Math.atan2(y, x);
-  windDirection.value = angle;
-  windStrength.value = Math.sqrt(
+  gsap.to(windDirection, {
+    value: angle,
+    duration: 5,
+  });
+
+  const strength = Math.sqrt(
     Math.pow(x / (window.innerWidth / 2), 2) +
       Math.pow(y / (window.innerHeight / 2), 2)
   );
+  gsap.to(windStrength, {
+    value: strength,
+    duration: 5,
+  });
 });
 
 /**
