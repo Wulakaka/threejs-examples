@@ -1,27 +1,30 @@
-import * as THREE from "three/webgpu";
+import model from "@/assets/suzanne.glb?url";
+import {GLTFLoader} from "three/examples/jsm/Addons.js";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 import {
-  atan,
+  add,
   cameraPosition,
-  cos,
   Fn,
+  normalWorld,
   positionLocal,
-  rotate,
+  positionWorld,
+  rand,
   sin,
   smoothstep,
-  texture,
   time,
   uniform,
-  uv,
   vec2,
   vec3,
   vec4,
 } from "three/tsl";
-import {GLTFLoader} from "three/examples/jsm/Addons.js";
-import model from "@/assets/suzanne.glb?url";
+import * as THREE from "three/webgpu";
+
+const uColor = uniform(new THREE.Color("#70c1ff"), "color");
 
 const gui = new GUI();
+
+gui.addColor(uColor, "value").name("uColor");
 
 const container = document.createElement("div");
 document.body.appendChild(container);
@@ -99,7 +102,63 @@ gui.addColor(rendererParameters, "clearColor").onChange(() => {
 /**
  * Material
  */
-const material = new THREE.MeshBasicMaterial();
+const colorNode = Fn(() => {
+  // stripes
+  const stripes = positionWorld.y.sub(time.mul(0.02)).mul(20).fract();
+  // make the gradient sharper
+  stripes.powAssign(3);
+
+  // Fresnel
+  const viewDirection = positionWorld.sub(cameraPosition).normalize();
+  const fresnel = normalWorld.dot(viewDirection).add(1);
+  fresnel.powAssign(2);
+
+  // Falloff
+  const falloff = smoothstep(0.8, 0.0, fresnel);
+
+  // Holographic
+  const holographic = stripes.mul(fresnel);
+  holographic.addAssign(fresnel.mul(1.25));
+  // 通过衰减，让边缘看起来跟柔和
+  holographic.mulAssign(falloff);
+
+  return vec4(uColor, holographic);
+});
+
+const random2D = Fn(({value}: {value: ReturnType<typeof vec2>}) => {
+  return value.dot(vec2(12.9898, 78.233)).sin().mul(43758.5453123).fract();
+});
+
+const positionNode = Fn(() => {
+  // Glitch effect
+  const glitchTime = time.sub(positionLocal.y);
+  // 使用多个不同频率的正弦波叠加让抖动看起来是随机的
+  const glitchStrength = add(
+    sin(glitchTime),
+    sin(glitchTime.mul(3.45)),
+    sin(glitchTime.mul(8.76))
+  );
+  glitchStrength.divAssign(3);
+  glitchStrength.smoothstepAssign(0.3, 1);
+  glitchStrength.mulAssign(0.25);
+
+  const x = positionLocal.x.add(
+    rand(positionLocal.xz.add(time)).sub(0.5).mul(glitchStrength)
+  );
+  const z = positionLocal.z.add(
+    rand(positionLocal.zx.add(time)).sub(0.5).mul(glitchStrength)
+  );
+  return vec3(x, positionLocal.y, z);
+});
+
+const material = new THREE.MeshBasicNodeMaterial({
+  colorNode: colorNode(),
+  positionNode: positionNode(),
+  depthWrite: false,
+  transparent: true,
+  side: THREE.DoubleSide,
+  blending: THREE.AdditiveBlending,
+});
 
 /**
  * Objects
@@ -128,25 +187,6 @@ gltfLoader.load(model, (gltf) => {
   });
 
   scene.add(suzanne);
-});
-
-const colorNode = Fn(() => {
-  return vec4(1);
-});
-
-const positionNode = Fn(() => {
-  return positionLocal;
-});
-
-// Material
-const smokeMaterial = new THREE.MeshBasicNodeMaterial({
-  colorNode: colorNode(),
-  // color: "red",
-  positionNode: positionNode(),
-  depthWrite: false,
-  // wireframe: true,
-  side: THREE.DoubleSide,
-  transparent: true,
 });
 
 renderer.init().then(() => {
