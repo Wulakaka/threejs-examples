@@ -81,6 +81,8 @@ importers:
 
   gpu/5-coffee-smoke: {}
 
+  gpu/6-hologram-shader: {}
+
 packages:
 
   '@alvarosabu/utils@3.2.0':
