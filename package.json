@@ -15,6 +15,7 @@
     "dev:galaxy": "vite serve gpu/4-animated-galaxy",
     "dev:coffee": "vite serve gpu/5-coffee-smoke",
     "dev:hologram": "vite serve gpu/6-hologram-shader",
+    "dev:firework": "vite serve gpu/7-firework",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

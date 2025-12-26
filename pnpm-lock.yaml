@@ -83,6 +83,8 @@ importers:
 
   gpu/6-hologram-shader: {}
 
+  gpu/7-firework: {}
+
 packages:
 
   '@alvarosabu/utils@3.2.0':
