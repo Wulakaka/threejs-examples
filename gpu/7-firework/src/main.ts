@@ -1,6 +1,15 @@
+import gsap from "gsap";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
-import {float, instancedBufferAttribute, texture, uv, vec4} from "three/tsl";
+import {
+  color,
+  float,
+  instancedBufferAttribute,
+  texture,
+  uniform,
+  uv,
+  vec4,
+} from "three/tsl";
 import * as THREE from "three/webgpu";
 
 const gui = new GUI({width: 340});
@@ -88,7 +97,7 @@ const createFirework = (
   size: number,
   map: THREE.Texture,
   radius: number,
-  color: THREE.Color
+  c: THREE.Color
 ) => {
   const positionArray = new Float32Array(count * 3);
   const randomArray = new Float32Array(count);
@@ -118,21 +127,25 @@ const createFirework = (
   );
   const randomAttribute = new THREE.InstancedBufferAttribute(randomArray, 1);
 
+  const pos = instancedBufferAttribute(positionAttribute);
+
+  const aRandom = instancedBufferAttribute(randomAttribute);
+
+  const progress = uniform(0);
+
   const textureAlpha = texture(map, uv()).r;
 
   // Material
   const material = new THREE.SpriteNodeMaterial({
-    positionNode: instancedBufferAttribute(positionAttribute),
+    positionNode: pos,
     sizeAttenuation: true,
     // map: map,
     transparent: true,
-    colorNode: vec4(color, textureAlpha),
+    colorNode: vec4(color(c), textureAlpha),
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   });
-  material.scaleNode = float(size).mul(
-    instancedBufferAttribute(randomAttribute)
-  );
+  material.scaleNode = float(size).mul(aRandom);
 
   // Points
   const firework = new THREE.Sprite(material);
@@ -140,6 +153,20 @@ const createFirework = (
   firework.count = count;
   firework.position.copy(position);
   scene.add(firework);
+
+  const destroy = () => {
+    scene.remove(firework);
+    material.dispose();
+  };
+
+  gsap.to(progress, {
+    value: 1,
+    duration: 3,
+    ease: "linear",
+    onComplete: () => {
+      destroy();
+    },
+  });
 };
 
 createFirework(
@@ -150,6 +177,18 @@ createFirework(
   1,
   new THREE.Color("#8affff")
 );
+
+window.addEventListener("click", () => {
+  createFirework(
+    100,
+    new THREE.Vector3(0, 0, 0),
+    0.1,
+    textures[7],
+    1,
+    new THREE.Color("#8affff")
+  );
+});
+
 renderer.init().then(() => {
   /**
    * Animate
