@@ -1,23 +1,6 @@
-import model from "@/assets/suzanne.glb?url";
-import {GLTFLoader} from "three/examples/jsm/Addons.js";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
-import {
-  add,
-  cameraPosition,
-  Fn,
-  normalWorld,
-  positionLocal,
-  positionWorld,
-  rand,
-  sin,
-  smoothstep,
-  time,
-  uniform,
-  vec2,
-  vec3,
-  vec4,
-} from "three/tsl";
+import {float, instancedBufferAttribute} from "three/tsl";
 import * as THREE from "three/webgpu";
 
 const gui = new GUI({width: 340});
@@ -86,27 +69,43 @@ renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 /**
- * Material
+ * Firework
  */
-const colorNode = Fn(() => {});
+const createFirework = (
+  count: number,
+  position: THREE.Vector3,
+  size: number
+) => {
+  const positionArray = new Float32Array(count * 3);
 
-const positionNode = Fn(() => {});
+  for (let i = 0; i < count; i++) {
+    const i3 = i * 3;
+    positionArray[i3 + 0] = Math.random() - 0.5;
+    positionArray[i3 + 1] = Math.random() - 0.5;
+    positionArray[i3 + 2] = Math.random() - 0.5;
+  }
 
-const material = new THREE.MeshBasicNodeMaterial({
-  // colorNode: colorNode(),
-  // positionNode: positionNode(),
-  depthWrite: false,
-  transparent: true,
-  side: THREE.DoubleSide,
-  blending: THREE.AdditiveBlending,
-});
+  const positionAttribute = new THREE.InstancedBufferAttribute(
+    positionArray,
+    3
+  );
 
-/**
- * Objects
- */
-const mesh = new THREE.Mesh(new THREE.BoxGeometry(), material);
-scene.add(mesh);
+  // Material
+  const material = new THREE.SpriteNodeMaterial({
+    positionNode: instancedBufferAttribute(positionAttribute),
+    sizeAttenuation: true,
+  });
+  material.scaleNode = float(size);
 
+  // Points
+  const firework = new THREE.Sprite(material);
+  // 需要指定 count 才有效果
+  firework.count = count;
+  firework.position.copy(position);
+  scene.add(firework);
+};
+
+createFirework(100, new THREE.Vector3(0, 0, 0), 0.1);
 renderer.init().then(() => {
   /**
    * Animate
