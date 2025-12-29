@@ -85,6 +85,8 @@ importers:
 
   gpu/7-firework: {}
 
+  gpu/8-tornado: {}
+
 packages:
 
   '@alvarosabu/utils@3.2.0':
