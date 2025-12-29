@@ -1,6 +1,33 @@
-import {Mesh, PerspectiveCamera, PlaneGeometry, Scene} from "three";
-import {WebGPURenderer} from "three/webgpu";
+import {
+  Mesh,
+  PerspectiveCamera,
+  PlaneGeometry,
+  RepeatWrapping,
+  Scene,
+  TextureLoader,
+} from "three";
+import {MeshBasicNodeMaterial, WebGPURenderer} from "three/webgpu";
 import {getMaterial} from "./utils/getMaterial";
+import {OrbitControls} from "three/examples/jsm/Addons.js";
+import {
+  atan,
+  float,
+  Fn,
+  PI,
+  PI2,
+  ShaderNodeObject,
+  texture,
+  time,
+  uv,
+  vec2,
+  vec4,
+} from "three/tsl";
+
+const textureLoader = new TextureLoader();
+
+const perlinNoiseTexture = textureLoader.load("/rgb-256x256.png");
+perlinNoiseTexture.wrapS = RepeatWrapping;
+perlinNoiseTexture.wrapT = RepeatWrapping;
 
 async function boot() {
   const container = document.createElement("div");
@@ -13,7 +40,7 @@ async function boot() {
     alpha: true,
   });
 
-  await renderer.init(); // WebGPU 需显式初始化
+  // await renderer.init(); // WebGPU 需显式初始化
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -29,9 +56,52 @@ async function boot() {
   );
   camera.position.z = 2.5;
 
+  // controls
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+
   // 几何 + 最小 TSL 节点材质；随时间变色
   const geometry = new PlaneGeometry(2, 2);
-  const material = getMaterial();
+
+  const toRadialUv = Fn(
+    ([uv, multiplier, rotation, offset]: [
+      ShaderNodeObject<ReturnType<typeof vec2>>,
+      ShaderNodeObject<ReturnType<typeof vec2>>,
+      ShaderNodeObject<ReturnType<typeof float>>,
+      ShaderNodeObject<ReturnType<typeof vec2>>,
+    ]) => {
+      const centeredUv = uv.sub(vec2(0.5));
+      const angle = atan(centeredUv.y, centeredUv.x).add(PI).div(PI2);
+      const distanceToCenter = centeredUv.length();
+      const radialUv = vec2(angle, distanceToCenter);
+      radialUv.mulAssign(multiplier);
+      radialUv.x.addAssign(rotation);
+      radialUv.addAssign(offset);
+      return radialUv;
+    }
+  );
+
+  const toSkewedUv = Fn(
+    ([uv, skew]: [
+      ShaderNodeObject<ReturnType<typeof vec2>>,
+      ShaderNodeObject<ReturnType<typeof vec2>>,
+    ]) => {
+      return vec2(uv.x.add(uv.y.mul(skew.x)), uv.y.add(uv.x.mul(skew.y)));
+    }
+  );
+
+  const material = new MeshBasicNodeMaterial({
+    transparent: true,
+  });
+
+  material.outputNode = Fn(() => {
+    const scaledTime = time.mul(0.01);
+    const newUv = toRadialUv(uv(), vec2(0.5), scaledTime, scaledTime.mul(2));
+    newUv.assign(toSkewedUv(newUv, vec2(-1, 0.0)));
+    newUv.mulAssign(vec2(4, 1));
+    const noise = texture(perlinNoiseTexture, newUv, 1).r;
+    return vec4(noise).step(0.5);
+  })();
 
   scene.add(new Mesh(geometry, material));
 
@@ -46,7 +116,10 @@ async function boot() {
   window.addEventListener("resize", resize);
 
   // 动画循环
-  renderer.setAnimationLoop(() => renderer.render(scene, camera));
+  renderer.setAnimationLoop(() => {
+    controls.update();
+    renderer.render(scene, camera);
+  });
 }
 
 boot();
