@@ -50,20 +50,24 @@ function init() {
 
   // TSL functions
   // 转变为径向 UV
+  // return vec2,
+  // x: angle 映射到 [0,multiplier.x],
+  // y: 距离中心的距离 [0, sqrt(0.5) * multiplier.y]
   const toRadialUv = Fn(([uv, multiplier, rotation, offset]) => {
     // 将 UV 转为中心在(0.5,0.5)的坐标系
-    // toVar 是为了什么？
-    // 可能是为了变成 variable
+    // toVar 是为了转换为可重用的变量
+    // 这里不转换好像没有差异
     const centeredUv = uv.sub(0.5).toVar();
     // 距离中心的长度
     const distanceToCenter = centeredUv.length();
     // angle 任意一点与中心点的夹角
     const angle = atan(centeredUv.y, centeredUv.x);
     // 径向 UV 坐标，angle 映射到 [0,1]，distanceToCenter 保持不变
-    // TODO 正下方为 0
+    // 左侧为 0
     const radialUv = vec2(angle.add(PI).div(TWO_PI), distanceToCenter).toVar();
 
     // 乘以系数
+    // multiplier 可以是 vec2，变换 x 和 y 分量
     radialUv.mulAssign(multiplier);
     // 增加旋转
     radialUv.x.addAssign(rotation);
@@ -108,7 +112,8 @@ function init() {
 
   // uniforms
   const emissiveColor = uniform(color("#ff8b4d"));
-  const timeScale = uniform(0.2);
+  // const timeScale = uniform(0.2);
+  const timeScale = uniform(0.01);
   const parabolStrength = uniform(1);
   const parabolOffset = uniform(0.3);
   const parabolAmplitude = uniform(0.2);
@@ -119,15 +124,25 @@ function init() {
     wireframe: false,
   });
 
-  // TODO outputNode 什么用处？
+  // outputNode 可以传 alpha 通道
   floorMaterial.outputNode = Fn(() => {
     // 放缓时间
     const scaledTime = time.mul(timeScale);
 
+    /**
+     * noises
+     * 通过两个 noise 的 x 一致，y 不一致制作错位的效果
+     * 第三个参数让 uv 扩大，实现吸收的效果
+     * 第四个参数实现旋转的效果
+     */
     // noise 1
     const noise1Uv = toRadialUv(uv(), vec2(0.5, 0.5), scaledTime, scaledTime);
+    // 倾斜以做出螺旋效果
     noise1Uv.assign(toSkewedUv(noise1Uv, vec2(-1, 0)));
+    // 这里 x 如果不乘以 2 的倍数将会看到断裂，因为上面将 uv.x 映射到了 [0,0.5]
     noise1Uv.mulAssign(vec2(4, 1));
+    // float
+    // remap 将原值的 [0.45,0.7] 映射到 [0,1]
     const noise1 = texture(perlinNoiseTexture, noise1Uv, 1).r.remap(0.45, 0.7);
 
     // noise 2
@@ -141,9 +156,11 @@ function init() {
     noise2Uv.mulAssign(vec2(2, 0.25));
     const noise2 = texture(perlinNoiseTexture, noise2Uv, 1).b.remap(0.45, 0.7);
 
-    // outer fade
+    /**
+     * outer fade
+     * 中心和边缘都变透明
+     */
     const distanceToCenter = uv().sub(0.5).toVar();
-    // TODO
     // 取小值
     const outerFade = min(
       distanceToCenter.length().oneMinus().smoothstep(0.5, 0.9),
@@ -151,17 +168,24 @@ function init() {
     );
 
     // effect
+    // 叠加最亮的区域
     const effect = noise1.mul(noise2).mul(outerFade).toVar();
 
-    // output
+    /**
+     * output
+     * effect.step(0.2) 只要 effect 大于 0.2 就显示高亮色，小于则显示黑色，所以出现了黑色包裹亮色的效果
+     * color 乘以 3 从颜色上没有意义，但是能让亮的区域更亮，从而更容易被 bloom 效果捕捉到
+     * alpha 的区间很小是让只要有一点 effect 就显示
+     */
     return vec4(
       emissiveColor.mul(effect.step(0.2)).mul(3), // Emissive
+      // color("white"), // Emissive
       effect.smoothstep(0, 0.01) // Alpha
     );
   })();
 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), floorMaterial);
-  floor.rotation.x = -Math.PI / 2;
+  // floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
 
   // tornado cylinder geometry
@@ -223,7 +247,7 @@ function init() {
   const emissive = new THREE.Mesh(cylinderGeometry, emissiveMaterial);
   // TODO 此处不是没有用吗？
   emissive.scale.set(1, 1, 1);
-  scene.add(emissive);
+  // scene.add(emissive);
 
   // tornado dark cylinder
   const darkMaterial = new THREE.MeshBasicNodeMaterial({
@@ -271,7 +295,7 @@ function init() {
 
   const dark = new THREE.Mesh(cylinderGeometry, darkMaterial);
   dark.scale.set(1, 1, 1);
-  scene.add(dark);
+  // scene.add(dark);
 
   // renderer
   renderer = new THREE.WebGPURenderer({antialias: true});
@@ -334,5 +358,6 @@ function onWindowResize() {
 async function animate() {
   controls.update();
 
-  postProcessing.render();
+  renderer.render(scene, camera);
+  // postProcessing.render();
 }
