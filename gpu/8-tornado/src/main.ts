@@ -42,7 +42,7 @@ function init() {
     50
   );
 
-  camera.position.set(1, 1, 3);
+  camera.position.set(1, 1, 6);
 
   scene = new THREE.Scene();
 
@@ -337,6 +337,27 @@ function init() {
   const dark = new THREE.Mesh(cylinderGeometry, darkMaterial);
   dark.scale.set(1, 1, 1);
   scene.add(dark);
+
+  const emissiveBall = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5, 16, 16),
+    new THREE.MeshBasicNodeMaterial({
+      outputNode: emissiveMaterial.outputNode,
+      transparent: true,
+    })
+  );
+
+  emissiveBall.position.set(-1.5, 0.5, 0);
+  scene.add(emissiveBall);
+
+  const darkBall = new THREE.Mesh(
+    new THREE.SphereGeometry(0.55, 16, 16),
+    new THREE.MeshBasicNodeMaterial({
+      outputNode: darkMaterial.outputNode,
+      transparent: true,
+    })
+  );
+  darkBall.position.copy(emissiveBall.position);
+  scene.add(darkBall);
 
   // renderer
   renderer = new THREE.WebGPURenderer({antialias: true});
