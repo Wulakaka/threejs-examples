@@ -15,7 +15,6 @@ import {
   Fn,
   PI,
   PI2,
-  ShaderNodeObject,
   texture,
   time,
   uv,
@@ -65,10 +64,10 @@ async function boot() {
 
   const toRadialUv = Fn(
     ([uv, multiplier, rotation, offset]: [
-      ShaderNodeObject<ReturnType<typeof vec2>>,
-      ShaderNodeObject<ReturnType<typeof vec2>>,
-      ShaderNodeObject<ReturnType<typeof float>>,
-      ShaderNodeObject<ReturnType<typeof vec2>>,
+      ReturnType<typeof vec2>,
+      ReturnType<typeof vec2>,
+      ReturnType<typeof float>,
+      ReturnType<typeof float>,
     ]) => {
       const centeredUv = uv.sub(vec2(0.5));
       const angle = atan(centeredUv.y, centeredUv.x).add(PI).div(PI2);
@@ -76,16 +75,13 @@ async function boot() {
       const radialUv = vec2(angle, distanceToCenter);
       radialUv.mulAssign(multiplier);
       radialUv.x.addAssign(rotation);
-      radialUv.addAssign(offset);
+      radialUv.y.addAssign(offset);
       return radialUv;
     }
   );
 
   const toSkewedUv = Fn(
-    ([uv, skew]: [
-      ShaderNodeObject<ReturnType<typeof vec2>>,
-      ShaderNodeObject<ReturnType<typeof vec2>>,
-    ]) => {
+    ([uv, skew]: [ReturnType<typeof vec2>, ReturnType<typeof vec2>]) => {
       return vec2(uv.x.add(uv.y.mul(skew.x)), uv.y.add(uv.x.mul(skew.y)));
     }
   );
@@ -96,11 +92,11 @@ async function boot() {
 
   material.outputNode = Fn(() => {
     const scaledTime = time.mul(0.01);
-    const newUv = toRadialUv(uv(), vec2(0.5), scaledTime, scaledTime.mul(2));
+    const newUv = toRadialUv(uv(), vec2(0.5), scaledTime, scaledTime);
     newUv.assign(toSkewedUv(newUv, vec2(-1, 0.0)));
     newUv.mulAssign(vec2(4, 1));
     const noise = texture(perlinNoiseTexture, newUv, 1).r;
-    return vec4(noise).step(0.5);
+    return vec4(noise.step(0.5));
   })();
 
   scene.add(new Mesh(geometry, material));
