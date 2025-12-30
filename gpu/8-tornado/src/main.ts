@@ -18,6 +18,7 @@ import {
   vec2,
   vec3,
   vec4,
+  float,
 } from "three/tsl";
 import {bloom} from "three/addons/tsl/display/BloomNode.js";
 
@@ -25,7 +26,11 @@ import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 
 import {Inspector} from "three/addons/inspector/Inspector.js";
 
-let camera, scene, renderer, postProcessing, controls;
+let camera: THREE.PerspectiveCamera,
+  scene: THREE.Scene,
+  renderer: THREE.WebGPURenderer,
+  postProcessing: THREE.PostProcessing,
+  controls: OrbitControls;
 
 init();
 
@@ -53,51 +58,73 @@ function init() {
   // return vec2,
   // x: angle 映射到 [0,multiplier.x],
   // y: 距离中心的距离 [0, sqrt(0.5) * multiplier.y]
-  const toRadialUv = Fn(([uv, multiplier, rotation, offset]) => {
-    // 将 UV 转为中心在(0.5,0.5)的坐标系
-    // toVar 是为了转换为可重用的变量
-    // 这里不转换好像没有差异
-    const centeredUv = uv.sub(0.5).toVar();
-    // 距离中心的长度
-    const distanceToCenter = centeredUv.length();
-    // angle 任意一点与中心点的夹角
-    const angle = atan(centeredUv.y, centeredUv.x);
-    // 径向 UV 坐标，angle 映射到 [0,1]，distanceToCenter 保持不变
-    // 左侧为 0
-    const radialUv = vec2(angle.add(PI).div(TWO_PI), distanceToCenter).toVar();
+  const toRadialUv = Fn(
+    ([uv, multiplier, rotation, offset]: [
+      ReturnType<typeof vec2>,
+      ReturnType<typeof vec2>,
+      ReturnType<typeof float>,
+      ReturnType<typeof float>,
+    ]) => {
+      // 将 UV 转为中心在(0.5,0.5)的坐标系
+      // toVar 是为了转换为可重用的变量
+      // 这里不转换好像没有差异
+      const centeredUv = uv.sub(0.5).toVar();
+      // 距离中心的长度
+      const distanceToCenter = centeredUv.length();
+      // angle 任意一点与中心点的夹角
+      const angle = atan(centeredUv.y, centeredUv.x);
+      // 径向 UV 坐标，angle 映射到 [0,1]，distanceToCenter 保持不变
+      // 左侧为 0
+      const radialUv = vec2(
+        angle.add(PI).div(TWO_PI),
+        distanceToCenter
+      ).toVar();
 
-    // 乘以系数
-    // multiplier 可以是 vec2，变换 x 和 y 分量
-    radialUv.mulAssign(multiplier);
-    // 增加旋转
-    radialUv.x.addAssign(rotation);
-    // 增加偏移
-    radialUv.y.addAssign(offset);
-    return radialUv;
-  });
+      // 乘以系数
+      // multiplier 可以是 vec2，变换 x 和 y 分量
+      radialUv.mulAssign(multiplier);
+      // 增加旋转
+      radialUv.x.addAssign(rotation);
+      // 增加偏移
+      radialUv.y.addAssign(offset);
+      return radialUv;
+    }
+  );
 
   // 倾斜 UV
-  const toSkewedUv = Fn(([uv, skew]) => {
-    return vec2(uv.x.add(uv.y.mul(skew.x)), uv.y.add(uv.x.mul(skew.y)));
-  });
+  const toSkewedUv = Fn(
+    ([uv, skew]: [ReturnType<typeof vec2>, ReturnType<typeof vec2>]) => {
+      return vec2(uv.x.add(uv.y.mul(skew.x)), uv.y.add(uv.x.mul(skew.y)));
+    }
+  );
 
   const twistedCylinder = Fn(
-    ([position, parabolStrength, parabolOffset, parabolAmplitude, time]) => {
+    ([position, parabolStrength, parabolOffset, parabolAmplitude, time]: [
+      ReturnType<typeof vec3>,
+      ReturnType<typeof float>,
+      ReturnType<typeof float>,
+      ReturnType<typeof float>,
+      ReturnType<typeof float>,
+    ]) => {
       // 在 xz 平面上计算
       const angle = atan(position.z, position.x).toVar();
       // 高度
       const elevation = position.y;
 
       // parabol 抛物线
+      // radius = (strength * (y - offset))^2 + amplitude
       const radius = parabolStrength
         .mul(position.y.sub(parabolOffset))
         .pow(2)
         .add(parabolAmplitude)
         .toVar();
 
-      // turbulences
+      // turbulence
+      // 震荡
       radius.addAssign(
         // -0.05 到 0.05 的波动
+        // sub time 是让波动向上移动
+        // angle.mul(2) 是让同一高度出现两个波峰，类似椭圆，如果
         sin(elevation.sub(time).mul(20).add(angle.mul(2))).mul(0.05)
       );
 
@@ -112,10 +139,12 @@ function init() {
 
   // uniforms
   const emissiveColor = uniform(color("#ff8b4d"));
-  // const timeScale = uniform(0.2);
-  const timeScale = uniform(0.01);
+  const timeScale = uniform(0.2);
+  // 抛物线变形系数
   const parabolStrength = uniform(1);
+  // 抛物线最低点 y 位置
   const parabolOffset = uniform(0.3);
+  // 抛物线最低位置的半径
   const parabolAmplitude = uniform(0.2);
 
   // tornado floor
@@ -185,7 +214,7 @@ function init() {
   })();
 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), floorMaterial);
-  // floor.rotation.x = -Math.PI / 2;
+  floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
 
   // tornado cylinder geometry
@@ -205,7 +234,7 @@ function init() {
     positionLocal,
     parabolStrength,
     parabolOffset,
-    parabolAmplitude.sub(0.05),
+    parabolAmplitude.sub(0.05), // 缩小一点
     time.mul(timeScale)
   );
 
@@ -239,15 +268,26 @@ function init() {
 
     // output
     return vec4(
-      emissiveColor.mul(1.2).div(emissiveColorLuminance), // Emissive
+      // 除以亮度值是为了让亮度变成 1，从而不受 emissiveColor 本身亮度的影响
+      // 再乘以 1.2 是为了让最终的亮度稍微高一点，因为 bloom 的阈值是 1
+      emissiveColor.div(emissiveColorLuminance).mul(1.2), // Emissive
       effect.smoothstep(0, 0.1) // Alpha
     );
   })();
 
+  const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicNodeMaterial({
+      outputNode: emissiveMaterial.outputNode,
+      transparent: true,
+    })
+  );
+  plane.position.set(1.5, 0.5, 0);
+  scene.add(plane);
+
   const emissive = new THREE.Mesh(cylinderGeometry, emissiveMaterial);
-  // TODO 此处不是没有用吗？
   emissive.scale.set(1, 1, 1);
-  // scene.add(emissive);
+  scene.add(emissive);
 
   // tornado dark cylinder
   const darkMaterial = new THREE.MeshBasicNodeMaterial({
@@ -265,6 +305,7 @@ function init() {
   );
 
   darkMaterial.outputNode = Fn(() => {
+    // add 是为了偏移 uv
     const scaledTime = time.mul(timeScale).add(123.4);
 
     // noise 1
@@ -295,7 +336,7 @@ function init() {
 
   const dark = new THREE.Mesh(cylinderGeometry, darkMaterial);
   dark.scale.set(1, 1, 1);
-  // scene.add(dark);
+  scene.add(dark);
 
   // renderer
   renderer = new THREE.WebGPURenderer({antialias: true});
@@ -310,7 +351,9 @@ function init() {
   // post processing
   postProcessing = new THREE.PostProcessing(renderer);
 
+  // 创建 pass node
   const scenePass = pass(scene, camera);
+  // Returns the texture node for the given output name.
   const scenePassColor = scenePass.getTextureNode("output");
 
   const bloomPass = bloom(scenePassColor, 1, 0.1, 1);
@@ -326,7 +369,7 @@ function init() {
   window.addEventListener("resize", onWindowResize);
 
   // debug
-  const gui = renderer.inspector.createParameters("Parameters");
+  const gui = (<Inspector>renderer.inspector).createParameters("Parameters");
 
   gui
     .addColor(
@@ -358,6 +401,6 @@ function onWindowResize() {
 async function animate() {
   controls.update();
 
-  renderer.render(scene, camera);
-  // postProcessing.render();
+  // renderer.render(scene, camera);
+  postProcessing.render();
 }
