@@ -4,15 +4,17 @@ import {
   PlaneGeometry,
   RepeatWrapping,
   Scene,
+  SphereGeometry,
   TextureLoader,
 } from "three";
 import {MeshBasicNodeMaterial, WebGPURenderer} from "three/webgpu";
-import {getMaterial} from "./utils/getMaterial";
 import {OrbitControls} from "three/examples/jsm/Addons.js";
 import {
   atan,
+  color,
   float,
   Fn,
+  min,
   PI,
   PI2,
   texture,
@@ -43,6 +45,7 @@ async function boot() {
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor("#a59f9f");
   container.appendChild(renderer.domElement);
 
   // 场景和相机
@@ -60,7 +63,7 @@ async function boot() {
   controls.enableDamping = true;
 
   // 几何 + 最小 TSL 节点材质；随时间变色
-  const geometry = new PlaneGeometry(2, 2);
+  const geometry = new SphereGeometry(1, 32, 32);
 
   const toRadialUv = Fn(
     ([uv, multiplier, rotation, offset]: [
@@ -92,11 +95,21 @@ async function boot() {
 
   material.outputNode = Fn(() => {
     const scaledTime = time.mul(0.01);
-    const newUv = toRadialUv(uv(), vec2(0.5), scaledTime, scaledTime);
-    newUv.assign(toSkewedUv(newUv, vec2(-1, 0.0)));
+    const newUv = uv().add(vec2(scaledTime.negate(), 0));
+    newUv.assign(toSkewedUv(newUv, vec2(-1, 0)));
     newUv.mulAssign(vec2(4, 1));
-    const noise = texture(perlinNoiseTexture, newUv, 1).r;
-    return vec4(noise.step(0.5));
+    const noise = texture(perlinNoiseTexture, newUv, 1).r.remap(0.45, 0.7);
+
+    const distanceToCenter = uv().sub(vec2(0.5)).length();
+
+    const outerFade = min(
+      distanceToCenter.oneMinus().smoothstep(0.5, 0.9),
+      distanceToCenter.smoothstep(0.0, 0.2)
+    );
+
+    const effect = noise.mul(outerFade);
+
+    return vec4(color("hotpink").mul(noise.step(0.15)).mul(3), 1);
   })();
 
   scene.add(new Mesh(geometry, material));
