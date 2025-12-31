@@ -2,7 +2,9 @@ import gsap from "gsap";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 import {
+  atan,
   color,
+  cos,
   float,
   Fn,
   instancedBufferAttribute,
@@ -97,7 +99,44 @@ const textures = [
   textureLoader.load("./particles/8.png"),
 ];
 
-const createFirework = (
+const from = new THREE.Vector3(-1, -1, -1);
+const axesHelper = new THREE.AxesHelper();
+axesHelper.position.copy(from);
+scene.add(axesHelper);
+
+const createShootingStar = (position: THREE.Vector3, start: THREE.Vector3) => {
+  const uProgress = uniform(0);
+  const from = vec3(start);
+  const target = vec3(position);
+  const strength = from.y.sub(target.y);
+  const toTarget = target.sub(from);
+  const speed = toTarget.length();
+  const angle = atan(toTarget.x, toTarget.z);
+  const x = sin(angle).mul(uProgress).mul(speed).add(from.x);
+  const y = strength.mul(uProgress.sub(1).pow(2)).add(target.y);
+  const z = cos(angle).mul(uProgress).mul(speed).add(from.z);
+  const positionNode = vec3(x, y, z);
+
+  const material = new THREE.SpriteNodeMaterial({
+    scaleNode: float(0.1),
+    sizeAttenuation: true,
+    positionNode: positionNode,
+  });
+  const sprite = new THREE.Sprite(material);
+  scene.add(sprite);
+
+  gsap.to(uProgress, {
+    value: 1,
+    duration: 2,
+    ease: "linear",
+    onComplete: () => {
+      scene.remove(sprite);
+      material.dispose();
+    },
+  });
+};
+
+const createExploding = (
   detail: number,
   position: THREE.Vector3,
   size: number,
@@ -194,11 +233,7 @@ const createFirework = (
     }
   );
 
-  // 2s 之后开始爆炸
-  const explodingProgress = uProgress
-    .remap(0.4, 1)
-    .clamp(0, 1)
-    .mul(aTimeMultiplier);
+  const explodingProgress = uProgress.mul(aTimeMultiplier);
 
   // Material
   const material = new THREE.SpriteNodeMaterial({
@@ -225,7 +260,7 @@ const createFirework = (
 
   gsap.to(uProgress, {
     value: 1,
-    duration: 5,
+    duration: 3,
     ease: "linear",
     onComplete: () => {
       destroy();
@@ -250,7 +285,18 @@ const createRandomFirework = () => {
   const color = new THREE.Color();
   color.setHSL(Math.random(), 1, 0.7);
 
-  createFirework(detail, position, size, texture, radius, color);
+  const progress = {
+    value: 0,
+  };
+  gsap.to(progress, {
+    value: 0.4,
+    duration: 2,
+    ease: "linear",
+    onComplete: () => {
+      createExploding(detail, position, size, texture, radius, color);
+    },
+  });
+  createShootingStar(position, from);
 };
 
 window.addEventListener("click", createRandomFirework);
