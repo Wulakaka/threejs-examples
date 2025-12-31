@@ -98,33 +98,27 @@ const textures = [
 ];
 
 const createFirework = (
-  count: number,
+  detail: number,
   position: THREE.Vector3,
   size: number,
   map: THREE.Texture,
   radius: number,
   c: THREE.Color
 ) => {
-  const positionArray = new Float32Array(count * 3);
+  const geometry = new THREE.IcosahedronGeometry(radius, detail);
+
+  const positionArray = geometry.getAttribute("position").array;
+  const count = geometry.getAttribute("position").count;
   const randomArray = new Float32Array(count);
 
   const timeMultipliersArray = new Float32Array(count);
+  const offset = 0.15;
 
   for (let i = 0; i < count; i++) {
     const i3 = i * 3;
-
-    const spherical = new THREE.Spherical(
-      radius * (0.75 + Math.random() * 0.25),
-      Math.random() * Math.PI,
-      Math.random() * Math.PI * 2
-    );
-
-    const position = new THREE.Vector3();
-    position.setFromSpherical(spherical);
-
-    positionArray[i3 + 0] = position.x;
-    positionArray[i3 + 1] = position.y;
-    positionArray[i3 + 2] = position.z;
+    positionArray[i3 + 0] += Math.random() * offset;
+    positionArray[i3 + 1] += Math.random() * offset;
+    positionArray[i3 + 2] += Math.random() * offset;
 
     randomArray[i] = Math.random();
 
@@ -144,6 +138,7 @@ const createFirework = (
 
   const pos = instancedBufferAttribute(positionAttribute);
 
+  // 0-1
   const aRandom = instancedBufferAttribute(randomAttribute);
 
   const aTimeMultiplier = instancedBufferAttribute(timeMultipliersAttribute);
@@ -152,11 +147,10 @@ const createFirework = (
 
   const textureAlpha = texture(map, uv()).r;
 
-  const progress = uProgress.mul(aTimeMultiplier);
-
   const positionNode = Fn(
     ([pos, progress]: [ReturnType<typeof vec3>, ReturnType<typeof float>]) => {
       const p = pos.toVar();
+
       // Exploding
       const explodingProgress = progress.remap(0, 0.1).toVar();
       explodingProgress.clampAssign(0, 1);
@@ -200,15 +194,21 @@ const createFirework = (
     }
   );
 
+  // 2s 之后开始爆炸
+  const explodingProgress = uProgress
+    .remap(0.4, 1)
+    .clamp(0, 1)
+    .mul(aTimeMultiplier);
+
   // Material
   const material = new THREE.SpriteNodeMaterial({
-    positionNode: positionNode(pos, progress),
+    positionNode: positionNode(pos, explodingProgress),
     sizeAttenuation: true,
     transparent: true,
     colorNode: vec4(color(c), textureAlpha),
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    scaleNode: scaleNode(size, progress),
+    scaleNode: scaleNode(size, explodingProgress),
   });
 
   // Points
@@ -225,7 +225,7 @@ const createFirework = (
 
   gsap.to(uProgress, {
     value: 1,
-    duration: 3,
+    duration: 5,
     ease: "linear",
     onComplete: () => {
       destroy();
@@ -234,14 +234,14 @@ const createFirework = (
 };
 
 const createRandomFirework = () => {
-  const count = Math.round(400 + Math.random() * 1000);
+  const detail = Math.round(10 + Math.random() * 10);
   // ...
   const position = new THREE.Vector3(
     (Math.random() - 0.5) * 2,
     Math.random(),
     (Math.random() - 0.5) * 2
   );
-  const size = 0.1 + Math.random() * 0.1;
+  const size = 0.05 + Math.random() * 0.05;
 
   const texture = textures[Math.floor(Math.random() * textures.length)];
 
@@ -250,7 +250,7 @@ const createRandomFirework = () => {
   const color = new THREE.Color();
   color.setHSL(Math.random(), 1, 0.7);
 
-  createFirework(count, position, size, texture, radius, color);
+  createFirework(detail, position, size, texture, radius, color);
 };
 
 window.addEventListener("click", createRandomFirework);
