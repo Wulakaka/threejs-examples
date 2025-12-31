@@ -4,10 +4,16 @@ import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 import {
   color,
   float,
+  Fn,
   instancedBufferAttribute,
+  min,
+  mix,
+  pow,
+  sin,
   texture,
   uniform,
   uv,
+  vec3,
   vec4,
 } from "three/tsl";
 import * as THREE from "three/webgpu";
@@ -102,6 +108,8 @@ const createFirework = (
   const positionArray = new Float32Array(count * 3);
   const randomArray = new Float32Array(count);
 
+  const timeMultipliersArray = new Float32Array(count);
+
   for (let i = 0; i < count; i++) {
     const i3 = i * 3;
 
@@ -119,6 +127,8 @@ const createFirework = (
     positionArray[i3 + 2] = position.z;
 
     randomArray[i] = Math.random();
+
+    timeMultipliersArray[i] = 1 + Math.random();
   }
 
   const positionAttribute = new THREE.InstancedBufferAttribute(
@@ -127,25 +137,79 @@ const createFirework = (
   );
   const randomAttribute = new THREE.InstancedBufferAttribute(randomArray, 1);
 
+  const timeMultipliersAttribute = new THREE.InstancedBufferAttribute(
+    timeMultipliersArray,
+    1
+  );
+
   const pos = instancedBufferAttribute(positionAttribute);
 
   const aRandom = instancedBufferAttribute(randomAttribute);
 
-  const progress = uniform(0);
+  const aTimeMultiplier = instancedBufferAttribute(timeMultipliersAttribute);
+
+  const uProgress = uniform(0);
 
   const textureAlpha = texture(map, uv()).r;
 
+  const progress = uProgress.mul(aTimeMultiplier);
+
+  const positionNode = Fn(
+    ([pos, progress]: [ReturnType<typeof vec3>, ReturnType<typeof float>]) => {
+      const p = pos.toVar();
+      // Exploding
+      const explodingProgress = progress.remap(0, 0.1).toVar();
+      explodingProgress.clampAssign(0, 1);
+      explodingProgress.assign(pow(explodingProgress.oneMinus(), 3).oneMinus());
+      p.assign(mix(vec3(0), p, explodingProgress));
+
+      // Falling
+      const fallingProgress = progress.remap(0.1, 1).toVar();
+      fallingProgress.clampAssign(0, 1);
+      fallingProgress.assign(pow(fallingProgress.oneMinus(), 3).oneMinus());
+      p.y.subAssign(fallingProgress.mul(0.2));
+
+      return p;
+    }
+  );
+
+  const scaleNode = Fn(
+    ([size, progress]: [
+      ReturnType<typeof float>,
+      ReturnType<typeof float>,
+    ]) => {
+      const s = size.toVar();
+
+      // Scaling
+      const sizeOpeningProgress = progress.remap(0, 0.125).toVar();
+      const sizeClosingProgress = progress.remap(0.125, 1, 1, 0).toVar();
+      const sizeProgress = min(sizeOpeningProgress, sizeClosingProgress).clamp(
+        0,
+        1
+      );
+
+      // Twinkling
+      const twinklingProgress = progress.remap(0.2, 0.8).clamp(0, 1);
+      const sizeTwinkling = sin(progress.mul(30))
+        .mul(0.5)
+        .add(0.5)
+        .mul(twinklingProgress)
+        .oneMinus();
+
+      return s.mul(aRandom).mul(sizeProgress).mul(sizeTwinkling);
+    }
+  );
+
   // Material
   const material = new THREE.SpriteNodeMaterial({
-    positionNode: pos,
+    positionNode: positionNode(pos, progress),
     sizeAttenuation: true,
-    // map: map,
     transparent: true,
     colorNode: vec4(color(c), textureAlpha),
     depthWrite: false,
     blending: THREE.AdditiveBlending,
+    scaleNode: scaleNode(size, progress),
   });
-  material.scaleNode = float(size).mul(aRandom);
 
   // Points
   const firework = new THREE.Sprite(material);
@@ -159,7 +223,7 @@ const createFirework = (
     material.dispose();
   };
 
-  gsap.to(progress, {
+  gsap.to(uProgress, {
     value: 1,
     duration: 3,
     ease: "linear",
@@ -169,35 +233,32 @@ const createFirework = (
   });
 };
 
-createFirework(
-  100,
-  new THREE.Vector3(0, 0, 0),
-  0.1,
-  textures[7],
-  1,
-  new THREE.Color("#8affff")
-);
-
-window.addEventListener("click", () => {
-  createFirework(
-    100,
-    new THREE.Vector3(0, 0, 0),
-    0.1,
-    textures[7],
-    1,
-    new THREE.Color("#8affff")
+const createRandomFirework = () => {
+  const count = Math.round(400 + Math.random() * 1000);
+  // ...
+  const position = new THREE.Vector3(
+    (Math.random() - 0.5) * 2,
+    Math.random(),
+    (Math.random() - 0.5) * 2
   );
-});
+  const size = 0.1 + Math.random() * 0.1;
 
-renderer.init().then(() => {
-  /**
-   * Animate
-   */
-  renderer.setAnimationLoop((t) => {
-    // Update controls
-    controls.update();
+  const texture = textures[Math.floor(Math.random() * textures.length)];
 
-    // Render
-    renderer.render(scene, camera);
-  });
+  const radius = 0.5 + Math.random();
+
+  const color = new THREE.Color();
+  color.setHSL(Math.random(), 1, 0.7);
+
+  createFirework(count, position, size, texture, radius, color);
+};
+
+window.addEventListener("click", createRandomFirework);
+
+renderer.setAnimationLoop((t) => {
+  // Update controls
+  controls.update();
+
+  // Render
+  renderer.render(scene, camera);
 });
