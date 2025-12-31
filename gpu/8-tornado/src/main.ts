@@ -25,6 +25,7 @@ import {bloom} from "three/addons/tsl/display/BloomNode.js";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 
 import {Inspector} from "three/addons/inspector/Inspector.js";
+import {afterImage} from "three/examples/jsm/tsl/display/AfterImageNode.js";
 
 let camera: THREE.PerspectiveCamera,
   scene: THREE.Scene,
@@ -378,7 +379,10 @@ function init() {
   const scenePassColor = scenePass.getTextureNode("output");
 
   const bloomPass = bloom(scenePassColor, 1, 0.1, 1);
-  postProcessing.outputNode = scenePassColor.add(bloomPass);
+
+  const afterImagePass = afterImage(scenePassColor, 0.8);
+
+  postProcessing.outputNode = scenePassColor.add(bloomPass).add(afterImagePass);
 
   // controls
   controls = new OrbitControls(camera, renderer.domElement);
