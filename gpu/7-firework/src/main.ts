@@ -1,6 +1,6 @@
 import gsap from "gsap";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
-import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
+import {Inspector} from "three/examples/jsm/inspector/Inspector.js";
 import {
   atan,
   color,
@@ -19,8 +19,6 @@ import {
   vec4,
 } from "three/tsl";
 import * as THREE from "three/webgpu";
-
-const gui = new GUI({width: 340});
 
 const container = document.createElement("div");
 document.body.appendChild(container);
@@ -84,6 +82,7 @@ const renderer = new THREE.WebGPURenderer({
 });
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.inspector = new Inspector();
 
 /**
  * Firework
@@ -104,8 +103,12 @@ const axesHelper = new THREE.AxesHelper();
 axesHelper.position.copy(from);
 scene.add(axesHelper);
 
-const createShootingStar = (position: THREE.Vector3, start: THREE.Vector3) => {
-  const uProgress = uniform(0);
+const createShootingStar = (
+  progress: ReturnType<typeof uniform>,
+  position: THREE.Vector3,
+  start: THREE.Vector3
+) => {
+  const uProgress = progress.remap(0, 0.4).clamp(0, 1);
   const from = vec3(start);
   const target = vec3(position);
   const strength = from.y.sub(target.y);
@@ -125,18 +128,61 @@ const createShootingStar = (position: THREE.Vector3, start: THREE.Vector3) => {
   const sprite = new THREE.Sprite(material);
   scene.add(sprite);
 
-  gsap.to(uProgress, {
-    value: 1,
-    duration: 2,
-    ease: "linear",
-    onComplete: () => {
-      scene.remove(sprite);
-      material.dispose();
-    },
-  });
+  const destroy = () => {
+    scene.remove(sprite);
+    material.dispose();
+  };
+
+  return destroy;
+
+  // gsap.to(uProgress, {
+  //   value: 1,
+  //   duration: 2,
+  //   ease: "linear",
+  //   onComplete: () => {
+  //     scene.remove(sprite);
+  //     material.dispose();
+  //   },
+  // });
 };
 
+const geometry = new THREE.IcosahedronGeometry(1, 15);
+
+const positionArray = geometry.getAttribute("position").array;
+const count = geometry.getAttribute("position").count;
+const randomArray = new Float32Array(count);
+
+const timeMultipliersArray = new Float32Array(count);
+const offset = 0.15;
+
+for (let i = 0; i < count; i++) {
+  const i3 = i * 3;
+  positionArray[i3 + 0] += Math.random() * offset;
+  positionArray[i3 + 1] += Math.random() * offset;
+  positionArray[i3 + 2] += Math.random() * offset;
+
+  randomArray[i] = Math.random();
+
+  timeMultipliersArray[i] = 1 + Math.random();
+}
+
+const positionAttribute = new THREE.InstancedBufferAttribute(positionArray, 3);
+const randomAttribute = new THREE.InstancedBufferAttribute(randomArray, 1);
+
+const timeMultipliersAttribute = new THREE.InstancedBufferAttribute(
+  timeMultipliersArray,
+  1
+);
+
+const pos = instancedBufferAttribute(positionAttribute);
+
+// 0-1
+const aRandom = instancedBufferAttribute(randomAttribute);
+
+const aTimeMultiplier = instancedBufferAttribute(timeMultipliersAttribute);
+
 const createExploding = (
+  progress: ReturnType<typeof uniform>,
   detail: number,
   position: THREE.Vector3,
   size: number,
@@ -144,51 +190,14 @@ const createExploding = (
   radius: number,
   c: THREE.Color
 ) => {
-  const geometry = new THREE.IcosahedronGeometry(radius, detail);
-
-  const positionArray = geometry.getAttribute("position").array;
-  const count = geometry.getAttribute("position").count;
-  const randomArray = new Float32Array(count);
-
-  const timeMultipliersArray = new Float32Array(count);
-  const offset = 0.15;
-
-  for (let i = 0; i < count; i++) {
-    const i3 = i * 3;
-    positionArray[i3 + 0] += Math.random() * offset;
-    positionArray[i3 + 1] += Math.random() * offset;
-    positionArray[i3 + 2] += Math.random() * offset;
-
-    randomArray[i] = Math.random();
-
-    timeMultipliersArray[i] = 1 + Math.random();
-  }
-
-  const positionAttribute = new THREE.InstancedBufferAttribute(
-    positionArray,
-    3
-  );
-  const randomAttribute = new THREE.InstancedBufferAttribute(randomArray, 1);
-
-  const timeMultipliersAttribute = new THREE.InstancedBufferAttribute(
-    timeMultipliersArray,
-    1
-  );
-
-  const pos = instancedBufferAttribute(positionAttribute);
-
-  // 0-1
-  const aRandom = instancedBufferAttribute(randomAttribute);
-
-  const aTimeMultiplier = instancedBufferAttribute(timeMultipliersAttribute);
-
-  const uProgress = uniform(0);
+  // const uProgress = uniform(0);
+  const uProgress = progress.remap(0.4, 1).clamp(0, 1);
 
   const textureAlpha = texture(map, uv()).r;
 
   const positionNode = Fn(
     ([pos, progress]: [ReturnType<typeof vec3>, ReturnType<typeof float>]) => {
-      const p = pos.toVar();
+      const p = pos.mul(vec3(radius)).toVar();
 
       // Exploding
       const explodingProgress = progress.remap(0, 0.1).toVar();
@@ -258,14 +267,7 @@ const createExploding = (
     material.dispose();
   };
 
-  gsap.to(uProgress, {
-    value: 1,
-    duration: 3,
-    ease: "linear",
-    onComplete: () => {
-      destroy();
-    },
-  });
+  return destroy;
 };
 
 const createRandomFirework = () => {
@@ -285,18 +287,26 @@ const createRandomFirework = () => {
   const color = new THREE.Color();
   color.setHSL(Math.random(), 1, 0.7);
 
-  const progress = {
-    value: 0,
-  };
+  const progress = uniform(0);
+  // const destroyShooting = createShootingStar(progress, position, from);
+  const destroyExploding = createExploding(
+    progress,
+    detail,
+    position,
+    size,
+    texture,
+    radius,
+    color
+  );
   gsap.to(progress, {
-    value: 0.4,
-    duration: 2,
+    value: 1,
+    duration: 5,
     ease: "linear",
     onComplete: () => {
-      createExploding(detail, position, size, texture, radius, color);
+      // destroyShooting();
+      destroyExploding();
     },
   });
-  createShootingStar(position, from);
 };
 
 window.addEventListener("click", createRandomFirework);
