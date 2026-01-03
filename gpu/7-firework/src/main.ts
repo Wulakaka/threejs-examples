@@ -15,6 +15,7 @@ import {
   texture,
   uniform,
   uv,
+  vec2,
   vec3,
   vec4,
 } from "three/tsl";
@@ -121,6 +122,7 @@ const createShootingStar = (
   const positionNode = vec3(x, y, z);
 
   const material = new THREE.SpriteNodeMaterial({
+    colorNode: uv().sub(vec2(0.5)).length().step(0.5).pow(2).oneMinus(),
     scaleNode: float(0.1),
     sizeAttenuation: true,
     positionNode: positionNode,
@@ -134,16 +136,6 @@ const createShootingStar = (
   };
 
   return destroy;
-
-  // gsap.to(uProgress, {
-  //   value: 1,
-  //   duration: 2,
-  //   ease: "linear",
-  //   onComplete: () => {
-  //     scene.remove(sprite);
-  //     material.dispose();
-  //   },
-  // });
 };
 
 const geometry = new THREE.IcosahedronGeometry(1, 15);
@@ -288,7 +280,7 @@ const createRandomFirework = () => {
   color.setHSL(Math.random(), 1, 0.7);
 
   const progress = uniform(0);
-  // const destroyShooting = createShootingStar(progress, position, from);
+  const destroyShooting = createShootingStar(progress, position, from);
   const destroyExploding = createExploding(
     progress,
     detail,
@@ -303,7 +295,7 @@ const createRandomFirework = () => {
     duration: 5,
     ease: "linear",
     onComplete: () => {
-      // destroyShooting();
+      destroyShooting();
       destroyExploding();
     },
   });
