@@ -87,6 +87,8 @@ importers:
 
   gpu/8-tornado: {}
 
+  gpu/9-attractors-particles: {}
+
 packages:
 
   '@alvarosabu/utils@3.2.0':
