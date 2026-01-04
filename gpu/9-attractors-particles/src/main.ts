@@ -39,7 +39,7 @@ let camera: THREE.PerspectiveCamera,
   scene: THREE.Scene,
   renderer: THREE.WebGPURenderer,
   controls: OrbitControls,
-  updateCompute;
+  updateCompute: THREE.ComputeNode;
 
 init();
 
@@ -201,32 +201,39 @@ async function init() {
   // init compute
 
   const init = Fn(() => {
-    // TODO
+    // 获取到每个实例的 position 和 velocity
     const position = positionBuffer.element(instanceIndex);
     const velocity = velocityBuffer.element(instanceIndex);
 
     const basePosition = vec3(
+      // [0, 1] 的随机数
+      // 这里 * 0xffffff 将范围扩大到 [0, 16777215]
       hash(instanceIndex.add(uint(Math.random() * 0xffffff))),
       hash(instanceIndex.add(uint(Math.random() * 0xffffff))),
       hash(instanceIndex.add(uint(Math.random() * 0xffffff)))
     )
-      .sub(0.5)
-      .mul(vec3(5, 0.2, 5));
+      .sub(0.5) // 中心化到 [-0.5, 0.5]
+      .mul(vec3(5, 0.2, 5)); // 拉伸为一个扁平的盒子
     position.assign(basePosition);
 
+    // [0, 2PI]
     const phi = hash(instanceIndex.add(uint(Math.random() * 0xffffff)))
       .mul(PI)
       .mul(2);
+    // [0, PI]
     const theta = hash(instanceIndex.add(uint(Math.random() * 0xffffff))).mul(
       PI
     );
+    // 基础速度，方向为球面方向，长度为 0.05
     const baseVelocity = sphericalToVec3(phi, theta).mul(0.05);
     velocity.assign(baseVelocity);
   });
 
+  // compute 的作用是返回一个 computeNode
   const initCompute = init().compute(count);
 
   const reset = () => {
+    // 执行一次计算
     renderer.compute(initCompute);
   };
 
@@ -234,6 +241,7 @@ async function init() {
 
   // update compute
 
+  // TODO为什么要 remap？remap之后不就会出现负值了吗
   const particleMassMultiplier = hash(
     instanceIndex.add(uint(Math.random() * 0xffffff))
   )
@@ -252,7 +260,7 @@ async function init() {
     // force
 
     const force = vec3(0).toVar();
-
+    // 遍历所有的吸引子
     Loop(attractorsLength, ({i}) => {
       const attractorPosition = attractorsPositions.element(i);
       const attractorRotationAxis = attractorsRotationAxes.element(i);
@@ -284,6 +292,7 @@ async function init() {
     If(speed.greaterThan(maxSpeed), () => {
       velocity.assign(velocity.normalize().mul(maxSpeed));
     });
+    // 速度衰减，避免无穷加速
     velocity.mulAssign(velocityDamping.oneMinus());
 
     // position
@@ -291,7 +300,7 @@ async function init() {
     position.addAssign(velocity.mul(delta));
 
     // box loop
-
+    // 盒子循环
     const halfHalfExtent = boundHalfExtent.div(2).toVar();
     position.assign(
       mod(position.add(halfHalfExtent), boundHalfExtent).sub(halfHalfExtent)
