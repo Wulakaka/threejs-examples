@@ -118,7 +118,7 @@ async function init() {
     attractor.orientation = attractorsRotationAxes.array[i] as THREE.Vector3;
     attractor.reference = new THREE.Object3D();
     attractor.reference.position.copy(attractor.position);
-    // TODO setFromUnitVectors 的作用是？
+    // setFromUnitVectors 的作用是将一个向量旋转到另一个向量的位置，这里是将默认的 (0,1,0) 方向旋转到 attractor.orientation 方向，也就是把 reference 的上方对齐到 orientation 方向
     attractor.reference.quaternion.setFromUnitVectors(
       new THREE.Vector3(0, 1, 0),
       attractor.orientation
@@ -241,7 +241,8 @@ async function init() {
 
   // update compute
 
-  // TODO为什么要 remap？remap之后不就会出现负值了吗
+  // 为什么要 remap？remap之后不就会出现负值了吗
+  // 出现负值可以看到部分反向旋转
   const particleMassMultiplier = hash(
     instanceIndex.add(uint(Math.random() * 0xffffff))
   )
@@ -269,6 +270,8 @@ async function init() {
       const direction = toAttractor.normalize();
 
       // gravity
+      // 法向量吸引力
+      // 万有引力公式 F = G * (m1*m2) / r^2
       const gravityStrength = attractorMass
         .mul(particleMass)
         .mul(gravityConstant)
@@ -278,6 +281,9 @@ async function init() {
       force.addAssign(gravityForce);
 
       // spinning
+      // 切向量旋转力
+      // 这里没有使用真实的物理公式，只是人为添加一个切向力让粒子围绕吸引子旋转
+      // 叉乘的模长等于两个向量夹角的正弦值乘以两个向量的模长乘积，也就是越远离吸引子，切向力越大
       const spinningForce = attractorRotationAxis
         .mul(gravityStrength)
         .mul(spinningStrength);
@@ -286,7 +292,7 @@ async function init() {
     });
 
     // velocity
-
+    // 这里并没有使用加速度的概念，直接把力当做速度的增量来使用
     velocity.addAssign(force.mul(delta));
     const speed = velocity.length();
     If(speed.greaterThan(maxSpeed), () => {
