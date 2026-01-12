@@ -77,6 +77,8 @@ importers:
 
   gpu/11-compute-cloth: {}
 
+  gpu/12-compute-geometry: {}
+
   gpu/2-shader-patterns: {}
 
   gpu/3-raging-sea: {}

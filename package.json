@@ -18,7 +18,7 @@
     "dev:firework": "vite serve gpu/7-firework",
     "dev:tornado": "vite serve gpu/8-tornado",
     "dev:attractors": "vite serve gpu/9-attractors-particles",
-    "dev:cloth": "vite serve gpu/11-compute-cloth",
+    "dev:geometry": "vite serve gpu/12-compute-geometry",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
