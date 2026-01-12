@@ -24,7 +24,24 @@ import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {UltraHDRLoader} from "three/addons/loaders/UltraHDRLoader.js";
 import WebGPU from "three/addons/capabilities/WebGPU.js";
 
-let renderer, scene, camera, controls;
+interface VerletVertex {
+  // 从 0 开始
+  id: number;
+  position: THREE.Vector3;
+  isFixed: boolean;
+  springIds: number[];
+}
+
+interface VerletSpring {
+  id: number;
+  vertex0: VerletVertex;
+  vertex1: VerletVertex;
+}
+
+let renderer: THREE.WebGPURenderer,
+  scene: THREE.Scene,
+  camera: THREE.PerspectiveCamera,
+  controls: OrbitControls;
 
 const clothWidth = 1;
 const clothHeight = 1;
@@ -32,22 +49,30 @@ const clothNumSegmentsX = 30;
 const clothNumSegmentsY = 30;
 const sphereRadius = 0.15;
 
-let vertexPositionBuffer, vertexForceBuffer, vertexParamsBuffer;
-let springVertexIdBuffer, springRestLengthBuffer, springForceBuffer;
-let springListBuffer;
-let computeSpringForces, computeVertexForces;
-let dampeningUniform,
-  spherePositionUniform,
-  stiffnessUniform,
-  sphereUniform,
-  windUniform;
-let vertexWireframeObject, springWireframeObject;
-let clothMesh, clothMaterial, sphere;
+let vertexPositionBuffer: THREE.StorageBufferNode,
+  vertexForceBuffer: THREE.StorageBufferNode,
+  vertexParamsBuffer: THREE.StorageBufferNode;
+let springVertexIdBuffer: THREE.StorageBufferNode,
+  springRestLengthBuffer: THREE.StorageBufferNode,
+  springForceBuffer: THREE.StorageBufferNode;
+let springListBuffer: THREE.StorageBufferNode;
+let computeSpringForces: THREE.ComputeNode,
+  computeVertexForces: THREE.ComputeNode;
+let dampeningUniform: THREE.UniformNode<number>,
+  spherePositionUniform: THREE.UniformNode<THREE.Vector3>,
+  stiffnessUniform: THREE.UniformNode<number>,
+  sphereUniform: THREE.UniformNode<number>,
+  windUniform: THREE.UniformNode<number>;
+let vertexWireframeObject: THREE.Mesh, springWireframeObject: THREE.Line;
+let clothMesh: THREE.Mesh,
+  clothMaterial: THREE.MeshPhysicalNodeMaterial,
+  sphere: THREE.Mesh;
 let timeSinceLastStep = 0;
 let timestamp = 0;
-const verletVertices = [];
-const verletSprings = [];
-const verletVertexColumns = [];
+const verletVertices: VerletVertex[] = [];
+const verletSprings: VerletSpring[] = [];
+// 二维数组，存储每行每列的 Verlet 顶点
+const verletVertexColumns: VerletVertex[][] = [];
 
 const clock = new THREE.Clock();
 
@@ -100,6 +125,7 @@ async function init() {
   const hdrLoader = new UltraHDRLoader().setPath("/textures/equirectangular/");
 
   const hdrTexture = await hdrLoader.loadAsync("royal_esplanade_2k.hdr.jpg");
+  // 等量矩形投影
   hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
   scene.background = hdrTexture;
   scene.backgroundBlurriness = 0.5;
@@ -107,8 +133,9 @@ async function init() {
 
   setupCloth();
 
-  const gui = renderer.inspector.createParameters("Settings");
-  gui.add(stiffnessUniform, "value", 0.1, 0.5, 0.01).name("stiffness");
+  const gui = (<Inspector>renderer.inspector).createParameters("Settings");
+  // 刚度
+  gui.add(stiffnessUniform, "value", 0.1, 0.5, 0.01).name("刚度 stiffness");
   gui.add(params, "wireframe");
   gui.add(params, "sphere");
   gui.add(params, "wind", 0, 5, 0.1);
@@ -129,12 +156,18 @@ async function init() {
   renderer.setAnimationLoop(render);
 }
 
+// Verlet 积分算法
 function setupVerletGeometry() {
   // this function sets up the geometry of the verlet system, a grid of vertices connected by springs
-
-  const addVerletVertex = (x, y, z, isFixed) => {
+  // 翻译：这个函数设置了verlet系统的几何体，一个由弹簧连接的顶点网格
+  const addVerletVertex = (
+    x: number,
+    y: number,
+    z: number,
+    isFixed: boolean
+  ) => {
     const id = verletVertices.length;
-    const vertex = {
+    const vertex: VerletVertex = {
       id,
       position: new THREE.Vector3(x, y, z),
       isFixed,
@@ -144,9 +177,10 @@ function setupVerletGeometry() {
     return vertex;
   };
 
-  const addVerletSpring = (vertex0, vertex1) => {
+  // 添加弹簧
+  const addVerletSpring = (vertex0: VerletVertex, vertex1: VerletVertex) => {
     const id = verletSprings.length;
-    const spring = {
+    const spring: VerletSpring = {
       id,
       vertex0,
       vertex1,
@@ -158,6 +192,7 @@ function setupVerletGeometry() {
   };
 
   // create the cloth's verlet vertices
+  // 创建布料的verlet顶点
   for (let x = 0; x <= clothNumSegmentsX; x++) {
     const column = [];
     for (let y = 0; y <= clothNumSegmentsY; y++) {
@@ -172,6 +207,7 @@ function setupVerletGeometry() {
   }
 
   // create the cloth's verlet springs
+  // 创建布料的verlet弹簧
   for (let x = 0; x <= clothNumSegmentsX; x++) {
     for (let y = 0; y <= clothNumSegmentsY; y++) {
       const vertex0 = verletVertexColumns[x][y];
@@ -191,12 +227,15 @@ function setupVerletGeometry() {
 
 function setupVerletVertexBuffers() {
   // setup the buffers holding the vertex data for the compute shaders
+  // 这些缓冲区保存了计算着色器的顶点数据
 
   const vertexCount = verletVertices.length;
 
   const springListArray = [];
   // this springListArray will hold a list of spring ids, ordered by the id of the vertex affected by that spring.
   // this is so the compute shader that accumulates the spring forces for each vertex can efficiently iterate over all springs affecting that vertex
+  // 翻译：这个 springListArray 将保存一个弹簧 ID 列表，按受该弹簧影响的顶点 ID 排序。
+  // 这样，累积影响每个顶点的弹簧力的计算着色器就可以有效地迭代所有影响该顶点的弹簧
 
   const vertexPositionArray = new Float32Array(vertexCount * 3);
   const vertexParamsArray = new Uint32Array(vertexCount * 3);
@@ -446,7 +485,7 @@ function setupClothMesh() {
   const verletVertexIdArray = new Uint32Array(vertexCount * 4);
   const indices = [];
 
-  const getIndex = (x, y) => {
+  const getIndex = (x: number, y: number) => {
     return y * clothNumSegmentsX + x;
   };
 
