@@ -75,6 +75,8 @@ importers:
 
   gpu/10-demo-compute: {}
 
+  gpu/11-compute-cloth: {}
+
   gpu/2-shader-patterns: {}
 
   gpu/3-raging-sea: {}
