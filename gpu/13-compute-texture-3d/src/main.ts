@@ -13,6 +13,7 @@ import {
   smoothstep,
   texture3D,
   uniform,
+  sub,
 } from "three/tsl";
 
 import {RaymarchingBox} from "three/addons/tsl/utils/Raymarching.js";
@@ -144,21 +145,32 @@ async function init() {
           )
         );
 
-        // TODO shading 表示什么？
-        const shading = texture
-          .sample(positionRay.add(vec3(-0.01)))
-          .r.sub(texture.sample(positionRay.add(vec3(0.01))).r);
+        // shading 明暗处理
+        // 从左下 vec3(-0.5) 到右上 vec3(0.5)
+        // 如果采样值开始变大，说明是云底层，需要变暗，则 shading 为负
+        // 如果采样值变小，说明是云顶层，需要变亮，则 shading 为正
+        const shading = sub(
+          texture.sample(positionRay.add(0.5)).r,
+          texture.sample(positionRay.add(0.5).add(0.01)).r
+        );
 
-        // TODO col 表示什么？
+        // col 表示附加颜色
+        // col = shading * 4 + (positionRay.x + positionRay.y) * 0.5 + 0.3
+        // (positionRay.x + positionRay.y) * 0.5 范围是 -0.5 到 0.5
+        // 也就是越靠近右上，附加的颜色值越多
         const col = shading
           .mul(4.0)
           .add(positionRay.x.add(positionRay.y).mul(0.5))
           .add(0.3);
 
+        // rgb += mapValue * (1 - alpha) * col
+        // 1 - alpha 表示剩下的可见范围
         finalColor.rgb.addAssign(
           finalColor.a.oneMinus().mul(mapValue).mul(col)
         );
 
+        // alpha += mapValue * (1 - alpha)
+        // 这样 alpha 最大也就是 1.0
         finalColor.a.addAssign(finalColor.a.oneMinus().mul(mapValue));
 
         // alpha >= 0.95 退出循环
