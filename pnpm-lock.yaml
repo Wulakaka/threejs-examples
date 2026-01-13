@@ -81,6 +81,8 @@ importers:
 
   gpu/13-compute-texture-3d: {}
 
+  gpu/14-fire-particles: {}
+
   gpu/2-shader-patterns: {}
 
   gpu/3-raging-sea: {}
