@@ -38,6 +38,7 @@ function init() {
 
   // create nodes
 
+  // 创建随机值
   const lifeRange = range(0.1, 1);
   const offsetRange = range(
     new THREE.Vector3(-2, 3, -2),
@@ -47,16 +48,22 @@ function init() {
   const speed = uniform(0.2);
   const scaledTime = time.add(5).mul(speed);
 
+  // 小数部分， 0-1 循环
   const lifeTime = scaledTime.mul(lifeRange).mod(1);
   const scaleRange = range(0.3, 2);
   const rotateRange = range(0.1, 4);
 
+  // 最多 0 - 10，最少 0 - 1
+  // 实现了不同的粒子生命周期长度随机，但是增长速度都与 scaledTime 保持一致
   const life = lifeTime.div(lifeRange);
 
+  // 光照效果，基于局部 Y 轴位置，Y 为 0 时，值为 1，值最低为 0.2
   const fakeLightEffect = positionLocal.y.oneMinus().max(0.2);
 
+  // 随时间旋转
   const textureNode = texture(map, rotateUV(uv(), scaledTime.mul(rotateRange)));
 
+  // life.oneMinus() 最多 1 - -9，最少 1 - 0
   const opacityNode = textureNode.a.mul(life.oneMinus());
 
   const smokeColor = mix(
@@ -66,10 +73,12 @@ function init() {
   );
 
   // create particles
+  const smokeLightColor = uniform(new THREE.Color(0xf27d0c));
 
   const smokeNodeMaterial = new THREE.SpriteNodeMaterial();
+  // life 到 0.4 时，完全变成 smokeColor
   smokeNodeMaterial.colorNode = mix(
-    color(0xf27d0c),
+    smokeLightColor,
     smokeColor,
     life.mul(2.5).min(1)
   ).mul(fakeLightEffect);
@@ -78,10 +87,7 @@ function init() {
   smokeNodeMaterial.scaleNode = scaleRange.mul(lifeTime.max(0.3));
   smokeNodeMaterial.depthWrite = false;
 
-  const smokeInstancedSprite = new THREE.Mesh(
-    new THREE.PlaneGeometry(1, 1),
-    smokeNodeMaterial
-  );
+  const smokeInstancedSprite = new THREE.Sprite(smokeNodeMaterial);
   smokeInstancedSprite.scale.setScalar(400);
   smokeInstancedSprite.count = 2000;
   scene.add(smokeInstancedSprite);
@@ -107,11 +113,13 @@ function init() {
   fireInstancedSprite.scale.setScalar(400);
   fireInstancedSprite.count = fireCount;
   fireInstancedSprite.position.y = -100;
+  // 让渲染顺序后置
   fireInstancedSprite.renderOrder = 1;
   scene.add(fireInstancedSprite);
 
   // indirect draw ( optional )
   // each indirect draw call is 5 uint32 values for indexes ( different structure for non-indexed draw calls using 4 uint32 values )
+  // 间接绘制可以提升性能
 
   const indexCount = fireGeometry.index!.array.length;
 
@@ -156,6 +164,7 @@ function init() {
   const gui = (renderer.inspector as Inspector).createParameters("Settings");
 
   gui.add(speed, "value", 0, 1, 0.01).name("speed");
+  gui.addColor(smokeLightColor, "value").name("smokeLightColor");
 }
 
 function onWindowResize() {
