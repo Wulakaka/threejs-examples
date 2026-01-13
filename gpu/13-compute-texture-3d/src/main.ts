@@ -95,10 +95,12 @@ async function init() {
 
       const noiseCoord = coord3d.mul(scale.div(1.5)).add(time);
 
+      // vec3 的 noise
       const noise = mx_noise_vec3(noiseCoord).toConst("noise");
 
       const data = noise.mul(d).mul(d).toConst("data");
 
+      // 存储到 texture3D 中
       textureStore(storageTexture, vec3(x, y, z), vec4(vec3(data.x), 1.0));
     }
   );
@@ -122,22 +124,32 @@ async function init() {
       threshold = float(0.08),
       opacity = float(0.18),
       steps = float(100),
+    }: {
+      texture: THREE.TextureNode;
+      range?: THREE.ConstNode<number>;
+      threshold?: THREE.ConstNode<number>;
+      opacity?: THREE.ConstNode<number>;
+      steps?: THREE.ConstNode<number>;
     }) => {
       const finalColor = vec4(0).toVar();
 
       RaymarchingBox(steps, ({positionRay}) => {
+        // 因为 boxGeometry 的局部坐标是 -0.5 到 0.5，所以这里加 0.5 变成 0 到 1 的采样坐标
         const mapValue = float(texture.sample(positionRay.add(0.5)).r).toVar();
 
+        // 0 - opacity
         mapValue.assign(
           smoothstep(threshold.sub(range), threshold.add(range), mapValue).mul(
             opacity
           )
         );
 
+        // TODO shading 表示什么？
         const shading = texture
           .sample(positionRay.add(vec3(-0.01)))
           .r.sub(texture.sample(positionRay.add(vec3(0.01))).r);
 
+        // TODO col 表示什么？
         const col = shading
           .mul(4.0)
           .add(positionRay.x.add(positionRay.y).mul(0.5))
@@ -149,6 +161,7 @@ async function init() {
 
         finalColor.a.addAssign(finalColor.a.oneMinus().mul(mapValue));
 
+        // alpha >= 0.95 退出循环
         If(finalColor.a.greaterThanEqual(0.95), () => {
           Break();
         });
@@ -174,28 +187,32 @@ async function init() {
     steps,
   });
 
+  // cloud3d 从上到下由白到黑，叠加颜色可以出现渐变
   const finalCloud = cloud3d.setRGB(cloud3d.rgb.add(baseColor));
 
+  // 这里只使用了 NodeMaterial
   const material = new THREE.NodeMaterial();
   material.colorNode = finalCloud;
   material.side = THREE.BackSide;
   material.transparent = true;
   material.name = "transparentRaymarchingMaterial";
 
-  mesh = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10), material);
+  mesh = new THREE.Mesh(new THREE.BoxGeometry(), material);
   scene.add(mesh);
 
+  // 旋转只是为了方便看
   mesh.rotation.y = Math.PI / 2;
 
   //
 
   renderer.compute(computeNode);
 
-  const gui = renderer.inspector.createParameters("Settings");
+  const gui = (<Inspector>renderer.inspector).createParameters("Settings");
   gui.add(threshold, "value", 0, 1, 0.01).name("threshold");
   gui.add(opacity, "value", 0, 1, 0.01).name("opacity");
   gui.add(range, "value", 0, 1, 0.01).name("range");
   gui.add(steps, "value", 0, 200, 1).name("steps");
+  gui.addColor(baseColor, "value").name("baseColor");
 
   window.addEventListener("resize", onWindowResize);
 }
