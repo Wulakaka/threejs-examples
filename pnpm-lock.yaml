@@ -83,6 +83,8 @@ importers:
 
   gpu/14-fire-particles: {}
 
+  gpu/15-multiple-rendertargets: {}
+
   gpu/2-shader-patterns: {}
 
   gpu/3-raging-sea: {}
